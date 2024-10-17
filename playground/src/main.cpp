@@ -4,8 +4,10 @@
 
 #include <SDL2/SDL.h>
 #include <iostream>
+#include <array>
+#include <cstring>
 
-int WinMain(int argc, char** argv) {
+int main(int argc, char** argv) {
 	// Initialize SDL
 
 	if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
@@ -14,7 +16,19 @@ int WinMain(int argc, char** argv) {
 		return 1;
 	}
 
-	SDL_Window* window = SDL_CreateWindow("Example", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 800, 600, 0);
+	std::array<int, 2> windowSize = {256, 256};
+
+	if (argc > 1) {
+		if (std::strcmp(argv[1], "-wide") == 0) {
+			windowSize[0] = 512;
+		} else if (std::strcmp(argv[1], "-xwide") == 0) {
+			windowSize[0] = 1024;
+		} else if (std::strcmp(argv[1], "-tall") == 0) {
+			windowSize[1] = 512;
+		}
+	}
+
+	SDL_Window* window = SDL_CreateWindow("Car!", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, windowSize[0], windowSize[1], 0);
 
 	if (!window) {
 		std::cout << "Error creating window: " << SDL_GetError() << std::endl;
@@ -32,11 +46,6 @@ int WinMain(int argc, char** argv) {
 
 	// Program begins here
 
-	SDL_FillRect(winSurface, NULL, SDL_MapRGB(winSurface->format, 158, 222, 106));
-
-	SDL_UpdateWindowSurface(window);
-	system("pause");
-
 	SDL_Surface* car = SDL_LoadBMP("../images/car.bmp");
 	if (!car) {
 		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING, "Error", "Error loading Car :(", NULL);
@@ -44,15 +53,26 @@ int WinMain(int argc, char** argv) {
 		return 1;
 	}
 
-	// Draw Car
-	if (SDL_BlitSurface(car, NULL, winSurface, NULL) < 0) {
+	// car->format->format = 390076419
+	//                       0x17401803
+	//                       SDL_PIXELFORMAT_BGR24
+
+	// winSurface->format->format = 370546692
+	//                              0x16161804
+	//                              SDL_PIXELFORMAT_XRGB8888
+
+	// I could convert the image to the window format to be slightly more optimized
+	// But like... it's a single static image...
+
+	// Draw Car (stretched if necessary)
+	if (SDL_BlitScaled(car, NULL, winSurface, &winSurface->clip_rect) < 0) {
 		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING, "Error", "Error when drawing Car...", NULL);
 		std::cout << "Error displaying BMP image: " << SDL_GetError() << std::endl;
 		return 1;
 	}
 
 	SDL_UpdateWindowSurface(window);
-	system("pause");
+	SDL_Delay(2000);
 
 	// Exit
 
