@@ -1,6 +1,5 @@
-// A program with no specific purpose that exists for me to test random things
-// Whenever I start developing a proper idea, it gets moved to its own folder and main.cpp file
-// This file here will likely receive constant updates as I try new things
+// A basic template for my SDL2 apps to expand upon
+// Do not compile! This does nothing!
 
 #include <SDL2/SDL.h>
 #include <iostream>
