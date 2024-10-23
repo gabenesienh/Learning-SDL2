@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
 
 // Load Car
 bool load() {
-	SDL_Surface* temp = SDL_LoadBMP("../images/car.bmp");
+	SDL_Surface* temp = SDL_LoadBMP("../img/car.bmp");
 	if (!temp) {
 		string message = "Error loading Car :C\n" + string(SDL_GetError());
 		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING, "Error", message.c_str(), NULL);
