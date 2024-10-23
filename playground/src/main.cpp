@@ -8,6 +8,7 @@
 using std::cin, std::cout;
 
 bool init();
+bool loop();
 void kill();
 
 SDL_Window* window;
@@ -16,10 +17,36 @@ SDL_Surface* winSurface;
 int main(int argc, char** argv) {
 	if (!init()) return 1;
 
-	// Program goes here
+	while (loop()) {
+		//SDL_Delay(17);
+	}
 
 	kill();
 	return 0;
+}
+
+bool loop() {
+	SDL_Event ev;
+
+	while (SDL_PollEvent(&ev) != 0) {
+		switch (ev.type) {
+			case SDL_KEYDOWN:
+				if (ev.key.keysym.scancode == SDL_SCANCODE_SPACE) {
+					SDL_FillRect(winSurface, NULL, SDL_MapRGB(winSurface->format, 199, 252, 106));
+				}
+				break;
+			case SDL_KEYUP:
+				if (ev.key.keysym.scancode == SDL_SCANCODE_SPACE) {
+					SDL_FillRect(winSurface, NULL, SDL_MapRGB(winSurface->format, 0, 0, 0));
+				}
+				break;
+			case SDL_QUIT:
+				return false;
+		}
+	}
+
+	SDL_UpdateWindowSurface(window);
+	return true;
 }
 
 // Initialize SDL
@@ -30,7 +57,7 @@ bool init() {
 		return false;
 	}
 
-	window = SDL_CreateWindow("Template", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1024, 768, 0);
+	window = SDL_CreateWindow("Template", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 960, 540, 0);
 	if (!window) {
 		cout << "Error creating window: " << SDL_GetError() << std::endl;
 		system("pause");

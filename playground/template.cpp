@@ -29,7 +29,7 @@ bool init() {
 		return false;
 	}
 
-	window = SDL_CreateWindow("Template", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1024, 768, 0);
+	window = SDL_CreateWindow("Template", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 960, 540, 0);
 	if (!window) {
 		cout << "Error creating window: " << SDL_GetError() << std::endl;
 		system("pause");
