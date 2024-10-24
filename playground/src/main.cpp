@@ -13,6 +13,9 @@ void kill();
 
 SDL_Window* window;
 SDL_Surface* winSurface;
+SDL_Event event;
+
+SDL_Rect* cursor;
 
 int main(int argc, char** argv) {
 	if (!init()) return 1;
@@ -26,19 +29,22 @@ int main(int argc, char** argv) {
 }
 
 bool loop() {
-	SDL_Event ev;
-
-	while (SDL_PollEvent(&ev) != 0) {
-		switch (ev.type) {
+	while (SDL_PollEvent(&event) != 0) {
+		switch (event.type) {
 			case SDL_KEYDOWN:
-				if (ev.key.keysym.scancode == SDL_SCANCODE_SPACE) {
+				if (event.key.keysym.scancode == SDL_SCANCODE_SPACE) {
 					SDL_FillRect(winSurface, NULL, SDL_MapRGB(winSurface->format, 199, 252, 106));
 				}
 				break;
 			case SDL_KEYUP:
-				if (ev.key.keysym.scancode == SDL_SCANCODE_SPACE) {
+				if (event.key.keysym.scancode == SDL_SCANCODE_SPACE) {
 					SDL_FillRect(winSurface, NULL, SDL_MapRGB(winSurface->format, 0, 0, 0));
 				}
+				break;
+			case SDL_MOUSEMOTION:
+				cursor = new SDL_Rect {event.motion.x, event.motion.y, 5, 5};
+
+				SDL_FillRect(winSurface, cursor, SDL_MapRGB(winSurface->format, 255, 255, 255));
 				break;
 			case SDL_QUIT:
 				return false;
