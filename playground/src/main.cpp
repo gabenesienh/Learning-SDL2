@@ -5,9 +5,11 @@
 #include <SDL2/SDL.h>
 #include <iostream>
 #include <cstdint>
+#include <array>
 
 using std::cin, std::cout;
 using std::int32_t;
+using std::array;
 
 bool init();
 bool loop();
@@ -23,27 +25,27 @@ SDL_Surface* canvas;
 SDL_Event event;
 
 SDL_Rect* brush;
-SDL_Rect* cursorBarTop;			// The individual cursor bars
-SDL_Rect* cursorBarRight;		// It's definitely a hacky way of doing things
-SDL_Rect* cursorBarBottom;		// But I haven't learned PNGs yet
-SDL_Rect* cursorBarLeft;
 
-// Mouse position (saves values from event.motion)
-struct mousePos {
-	int32_t x = 0;
-	int32_t y = 0;
-} mousePos;
+array<array<int, 3>, 10> colors = {{
+	{235, 64, 52},		// Red
+	{245, 124, 59},		// Orange
+	{245, 242, 73},		// Yellow
+	{50, 168, 58},		// Green
+	{66, 135, 245},		// Blue
+	{52, 57, 201},		// Indigo
+	{145, 75, 242},		// Purple
+	{252, 96, 185}, 	// Pink
+	{127, 127, 127},	// Gray
+	{255, 255, 255},	// White
+}};
 
 bool mouseLeftPressed = false;
+int activeColor = 9;
 
 int main(int argc, char** argv) {
 	if (!init()) return 1;
 
 	brush = new SDL_Rect {0, 0, 5, 5};
-	cursorBarTop = new SDL_Rect{0, 0, 2, 4};
-	cursorBarRight = new SDL_Rect{0, 0, 4, 2};
-	cursorBarBottom = new SDL_Rect{0, 0, 2, 4};
-	cursorBarLeft = new SDL_Rect{0, 0, 4, 2};
 
 	SDL_ShowCursor(SDL_DISABLE);
 
@@ -59,11 +61,22 @@ bool loop() {
 	while (SDL_PollEvent(&event) != 0) {
 		switch (event.type) {
 			case SDL_KEYDOWN:
-				if (event.key.keysym.scancode == SDL_SCANCODE_SPACE) {
-					SDL_FillRect(canvas, NULL, SDL_MapRGB(canvas->format, 199, 252, 106));
-				}
-				if (event.key.repeat != 0) {
-					SDL_FillRect(canvas, NULL, SDL_MapRGB(canvas->format, 255, 127, 127));
+				switch (event.key.keysym.scancode) {
+					case SDL_SCANCODE_SPACE:
+						if (event.key.repeat == 0) {
+							SDL_FillRect(canvas, NULL, SDL_MapRGB(canvas->format, 199, 252, 106));
+						} else {
+							SDL_FillRect(canvas, NULL, SDL_MapRGB(canvas->format, 255, 127, 127));
+						}
+						break;
+					default:
+						// Pick colors with num keys
+						// Each scancode index is equal to the previous but incremented by 1
+						// So this approach should be safe
+						if (event.key.keysym.scancode >= SDL_SCANCODE_1
+						&&  event.key.keysym.scancode <= SDL_SCANCODE_0) {
+							activeColor = event.key.keysym.scancode - SDL_SCANCODE_1;
+						}
 				}
 				break;
 			case SDL_KEYUP:
@@ -72,14 +85,15 @@ bool loop() {
 				}
 				break;
 			case SDL_MOUSEMOTION:
-				mousePos.x = event.motion.x;
-				mousePos.y = event.motion.y;
+				brush->x = event.motion.x - (brush->w/2);
+				brush->y = event.motion.y - (brush->h/2);
 
 				if (mouseLeftPressed) {
-					brush->x = mousePos.x - (brush->w/2);
-					brush->y = mousePos.y - (brush->h/2);
-
-					SDL_FillRect(canvas, brush, SDL_MapRGB(canvas->format, 255, 255, 255));
+					// Paint the canvas
+					int r = colors[activeColor][0];
+					int g = colors[activeColor][1];
+					int b = colors[activeColor][2];
+					SDL_FillRect(canvas, brush, SDL_MapRGB(canvas->format, r, g, b));
 				}
 
 				break;
@@ -89,6 +103,12 @@ bool loop() {
 			case SDL_MOUSEBUTTONUP:
 				if (event.button.button == SDL_BUTTON_LEFT) mouseLeftPressed = false;
 				break;
+			case SDL_MOUSEWHEEL:
+				brush->x = event.wheel.mouseX - (brush->w/2);
+				brush->y = event.wheel.mouseY - (brush->h/2);
+				brush->w += event.wheel.y;
+				brush->h += event.wheel.y;
+				break;
 			case SDL_QUIT:
 				return false;
 		}
@@ -97,22 +117,10 @@ bool loop() {
 	SDL_BlitSurface(canvas, NULL, winSurface, NULL);
 
 	// Draw cursor by drawing each bar individually and with different offsets
-	cursorBarTop->x = mousePos.x - cursorBarTop->w/2;
-	cursorBarTop->y = mousePos.y - (cursorBarTop->h*2 + 1);
-
-	cursorBarRight->x = mousePos.x + (cursorBarRight->w + 1);
-	cursorBarRight->y = mousePos.y - cursorBarRight->h/2;
-
-	cursorBarBottom->x = mousePos.x - cursorBarBottom->w/2;
-	cursorBarBottom->y = mousePos.y + (cursorBarBottom->h + 1);
-
-	cursorBarLeft->x = mousePos.x - (cursorBarLeft->w*2 + 1);
-	cursorBarLeft->y = mousePos.y - cursorBarLeft->h/2;
-
-	SDL_FillRect(winSurface, cursorBarTop, SDL_MapRGB(winSurface->format, 255, 255, 255));
-	SDL_FillRect(winSurface, cursorBarRight, SDL_MapRGB(winSurface->format, 255, 255, 255));
-	SDL_FillRect(winSurface, cursorBarBottom, SDL_MapRGB(winSurface->format, 255, 255, 255));
-	SDL_FillRect(winSurface, cursorBarLeft, SDL_MapRGB(winSurface->format, 255, 255, 255));
+	SDL_FillRect(winSurface, new SDL_Rect {brush->x, brush->y - 2, brush->w, 2}, SDL_MapRGB(winSurface->format, 255, 255, 255));
+	SDL_FillRect(winSurface, new SDL_Rect {brush->x + brush->w, brush->y, 2, brush->h}, SDL_MapRGB(winSurface->format, 255, 255, 255));
+	SDL_FillRect(winSurface, new SDL_Rect {brush->x, brush->y + brush->h, brush->w, 2}, SDL_MapRGB(winSurface->format, 255, 255, 255));
+	SDL_FillRect(winSurface, new SDL_Rect {brush->x - 2, brush->y, 2, brush->h}, SDL_MapRGB(winSurface->format, 255, 255, 255));
 
 	SDL_UpdateWindowSurface(window);
 	return true;
