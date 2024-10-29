@@ -2,6 +2,14 @@
 // Whenever I start developing a proper idea, it gets moved to its own folder and main.cpp file
 // This file here will likely receive constant updates as I try new things
 
+//TODO: better screen clear
+//TODO: change background color
+//TODO: custom background image
+//TODO: color picker (brush)
+//TODO: color picker (background)
+//TODO: brush size slider
+//TODO: remap scroll wheel function
+
 #include <SDL2/SDL.h>
 #include <iostream>
 #include <cstdint>
@@ -36,10 +44,11 @@ array<array<int, 3>, 10> colors = {{
 	{145, 75, 242},		// Purple
 	{252, 96, 185}, 	// Pink
 	{127, 127, 127},	// Gray
-	{255, 255, 255},	// White
+	{255, 255, 255}		// White
 }};
 
 bool mouseLeftPressed = false;
+bool mouseRightPressed = false;
 int activeColor = 9;
 
 int main(int argc, char** argv) {
@@ -88,26 +97,49 @@ bool loop() {
 				brush->x = event.motion.x - (brush->w/2);
 				brush->y = event.motion.y - (brush->h/2);
 
+				if (mouseLeftPressed && mouseRightPressed) {
+					// Cancel out M1 + M2
+					mouseLeftPressed = false;
+					mouseRightPressed = false;
+				}
+
 				if (mouseLeftPressed) {
 					// Paint the canvas
 					int r = colors[activeColor][0];
 					int g = colors[activeColor][1];
 					int b = colors[activeColor][2];
 					SDL_FillRect(canvas, brush, SDL_MapRGB(canvas->format, r, g, b));
+				} else if (mouseRightPressed) {
+					// Erase the canvas (by painting the background color)
+					SDL_FillRect(canvas, brush, SDL_MapRGB(canvas->format, 0, 0, 0));
 				}
 
 				break;
 			case SDL_MOUSEBUTTONDOWN:
-				if (event.button.button == SDL_BUTTON_LEFT) mouseLeftPressed = true;
+				switch (event.button.button) {
+					case SDL_BUTTON_LEFT:
+						mouseLeftPressed = true;
+						break;
+					case SDL_BUTTON_RIGHT:
+						mouseRightPressed = true;
+						break;
+				}
 				break;
 			case SDL_MOUSEBUTTONUP:
-				if (event.button.button == SDL_BUTTON_LEFT) mouseLeftPressed = false;
+				switch (event.button.button) {
+					case SDL_BUTTON_LEFT:
+						mouseLeftPressed = false;
+						break;
+					case SDL_BUTTON_RIGHT:
+						mouseRightPressed = false;
+						break;
+				}
 				break;
 			case SDL_MOUSEWHEEL:
 				brush->x = event.wheel.mouseX - (brush->w/2);
 				brush->y = event.wheel.mouseY - (brush->h/2);
-				brush->w += event.wheel.y;
-				brush->h += event.wheel.y;
+				brush->w += -event.wheel.y;
+				brush->h += -event.wheel.y;
 				break;
 			case SDL_QUIT:
 				return false;
