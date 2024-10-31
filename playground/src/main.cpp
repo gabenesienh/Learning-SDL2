@@ -2,6 +2,7 @@
 // Whenever I start developing a proper idea, it gets moved to its own folder and main.cpp file
 // This file here will likely receive constant updates as I try new things
 
+//TODO: fix gaps when drawing lines
 //TODO: better screen clear
 //TODO: change background color
 //TODO: custom background image
@@ -66,6 +67,7 @@ int main(int argc, char** argv) {
 	return 0;
 }
 
+// Event loop
 bool loop() {
 	while (SDL_PollEvent(&event) != 0) {
 		switch (event.type) {
@@ -81,7 +83,7 @@ bool loop() {
 					default:
 						// Pick colors with num keys
 						// Each scancode index is equal to the previous but incremented by 1
-						// So this approach should be safe
+						// So a value range condition should be safe
 						if (event.key.keysym.scancode >= SDL_SCANCODE_1
 						&&  event.key.keysym.scancode <= SDL_SCANCODE_0) {
 							activeColor = event.key.keysym.scancode - SDL_SCANCODE_1;
@@ -138,8 +140,10 @@ bool loop() {
 			case SDL_MOUSEWHEEL:
 				brush->x = event.wheel.mouseX - (brush->w/2);
 				brush->y = event.wheel.mouseY - (brush->h/2);
-				brush->w += -event.wheel.y;
-				brush->h += -event.wheel.y;
+				if (brush->w - event.wheel.y > 1 && brush->w - event.wheel.y < 64) {
+					brush->w += -event.wheel.y;
+					brush->h += -event.wheel.y;
+				}
 				break;
 			case SDL_QUIT:
 				return false;
@@ -158,7 +162,7 @@ bool loop() {
 	return true;
 }
 
-// Initialize SDL
+// Initialize SDL2
 bool init() {
 	if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
 		cout << "Error initializing SDL: " << SDL_GetError() << std::endl;
