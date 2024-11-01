@@ -3,7 +3,7 @@
 // This file here will likely receive constant updates as I try new things
 
 //TODO: fix gaps when drawing lines
-//TODO: better screen clear
+//TODO: screen clear gradient
 //TODO: change background color
 //TODO: custom background image
 //TODO: color picker (brush)
@@ -27,13 +27,21 @@ void kill();
 const int WINDOW_WIDTH = 960;
 const int WINDOW_HEIGHT = 540;
 
+const int CLEAR_CANVAS_DELAY = 30;
+
 SDL_Window* window;
 SDL_Surface* winSurface;
 SDL_Surface* canvas;
 
 SDL_Event event;
 
+array<bool, SDL_NUM_SCANCODES> keyStates = {false};
+
+bool mouseLeftPressed = false;
+bool mouseRightPressed = false;
+
 SDL_Rect* brush;
+int activeColor = 9;
 
 array<array<int, 3>, 10> colors = {{
 	{235, 64, 52},		// Red
@@ -45,12 +53,11 @@ array<array<int, 3>, 10> colors = {{
 	{145, 75, 242},		// Purple
 	{252, 96, 185}, 	// Pink
 	{127, 127, 127},	// Gray
-	{255, 255, 255}		// White
+	{255, 255, 255}		// White (default)
 }};
 
-bool mouseLeftPressed = false;
-bool mouseRightPressed = false;
-int activeColor = 9;
+// Counts up when holding the "clear canvas" key
+int clearCanvasTimer = 0;
 
 int main(int argc, char** argv) {
 	if (!init()) return 1;
@@ -58,6 +65,7 @@ int main(int argc, char** argv) {
 	brush = new SDL_Rect {0, 0, 5, 5};
 
 	SDL_ShowCursor(SDL_DISABLE);
+	SDL_SetSurfaceBlendMode(winSurface, SDL_BLENDMODE_BLEND);
 
 	while (loop()) {
 		//SDL_Delay(17);
@@ -72,18 +80,19 @@ bool loop() {
 	while (SDL_PollEvent(&event) != 0) {
 		switch (event.type) {
 			case SDL_KEYDOWN:
+				keyStates[event.key.keysym.scancode] = true;
+
 				switch (event.key.keysym.scancode) {
 					case SDL_SCANCODE_SPACE:
-						if (event.key.repeat == 0) {
-							SDL_FillRect(canvas, NULL, SDL_MapRGB(canvas->format, 199, 252, 106));
-						} else {
-							SDL_FillRect(canvas, NULL, SDL_MapRGB(canvas->format, 255, 127, 127));
+						if (event.key.repeat != 0
+						&&  clearCanvasTimer <= CLEAR_CANVAS_DELAY) {
+							clearCanvasTimer += 1;
 						}
 						break;
 					default:
 						// Pick colors with num keys
 						// Each scancode index is equal to the previous but incremented by 1
-						// So a value range condition should be safe
+						// So this value range condition should be safe
 						if (event.key.keysym.scancode >= SDL_SCANCODE_1
 						&&  event.key.keysym.scancode <= SDL_SCANCODE_0) {
 							activeColor = event.key.keysym.scancode - SDL_SCANCODE_1;
@@ -91,8 +100,10 @@ bool loop() {
 				}
 				break;
 			case SDL_KEYUP:
+				keyStates[event.key.keysym.scancode] = false;
+
 				if (event.key.keysym.scancode == SDL_SCANCODE_SPACE) {
-					SDL_FillRect(canvas, NULL, SDL_MapRGB(canvas->format, 0, 0, 0));
+					clearCanvasTimer = 0;
 				}
 				break;
 			case SDL_MOUSEMOTION:
@@ -140,7 +151,7 @@ bool loop() {
 			case SDL_MOUSEWHEEL:
 				brush->x = event.wheel.mouseX - (brush->w/2);
 				brush->y = event.wheel.mouseY - (brush->h/2);
-				if (brush->w - event.wheel.y > 1 && brush->w - event.wheel.y < 64) {
+				if (brush->w - event.wheel.y > 1 && brush->w - event.wheel.y <= 64) {
 					brush->w += -event.wheel.y;
 					brush->h += -event.wheel.y;
 				}
@@ -157,6 +168,16 @@ bool loop() {
 	SDL_FillRect(winSurface, new SDL_Rect {brush->x + brush->w, brush->y, 2, brush->h}, SDL_MapRGB(winSurface->format, 255, 255, 255));
 	SDL_FillRect(winSurface, new SDL_Rect {brush->x, brush->y + brush->h, brush->w, 2}, SDL_MapRGB(winSurface->format, 255, 255, 255));
 	SDL_FillRect(winSurface, new SDL_Rect {brush->x - 2, brush->y, 2, brush->h}, SDL_MapRGB(winSurface->format, 255, 255, 255));
+
+	if (clearCanvasTimer > 0
+	&& clearCanvasTimer <= CLEAR_CANVAS_DELAY) {
+		if (clearCanvasTimer < CLEAR_CANVAS_DELAY) {
+			// Implement gradient here
+			// SDL_FillRect(winSurface, NULL, SDL_MapRGB(canvas->format, 255, 255, 255));
+		} else {
+			SDL_FillRect(canvas, NULL, SDL_MapRGB(canvas->format, 0, 0, 0));
+		}
+	}
 
 	SDL_UpdateWindowSurface(window);
 	return true;
