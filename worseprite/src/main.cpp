@@ -32,6 +32,7 @@ struct {
 	int b = 255;
 } bgColor;
 
+// Holds the result of SDL_MapRGB()
 Uint32 bgColorValue;
 
 const float CLEAR_CANVAS_DELAY = 0.5; // In seconds
@@ -50,8 +51,8 @@ SDL_Event event;
 array<bool, SDL_NUM_SCANCODES> keyStates = {false};
 
 // Copy values from mouse events
-// These don't represent the real mouse input, since they are forcibly disabled
-// a few times in the code
+// These don't represent raw mouse input, since they are forcibly disabled a
+// few times in the code
 bool mouseLeftPressed = false;
 bool mouseRightPressed = false; // Currently unused
 
@@ -92,9 +93,7 @@ int main(int argc, char** argv) {
 	SDL_ShowCursor(SDL_DISABLE);
 	SDL_FillRect(canvas, NULL, bgColorValue);
 
-	while (loop()) {
-		//SDL_Delay(17);
-	}
+	while (loop()) {}
 
 	kill();
 	return 0;
@@ -136,6 +135,7 @@ bool loop() {
 				keyStates[event.key.keysym.scancode] = false;
 				break;
 			case SDL_MOUSEMOTION:
+				// Center brush on cursor
 				brush->x = event.motion.x - (brush->w/2);
 				brush->y = event.motion.y - (brush->h/2);
 
@@ -153,11 +153,12 @@ bool loop() {
 								int r = colors[brushColor][0];
 								int g = colors[brushColor][1];
 								int b = colors[brushColor][2];
+
 								SDL_FillRect(canvas, brush, SDL_MapRGB(canvas->format, r, g, b));
 								break;
 							}
 						case TOOL_ERASER:
-							// Erase the canvas (by painting the background color)
+							// Erase by painting the background color
 							SDL_FillRect(canvas, brush, bgColorValue);
 							break;
 					} 
@@ -186,12 +187,15 @@ bool loop() {
 				break;
 			case SDL_MOUSEWHEEL:
 				if (keyStates[SDL_SCANCODE_LCTRL]) {
-					brush->x = event.wheel.mouseX - (brush->w/2);
-					brush->y = event.wheel.mouseY - (brush->h/2);
+					// Resize brush
 					if (brush->w - event.wheel.y > 1 && brush->w - event.wheel.y <= 64) {
 						brush->w += -event.wheel.y;
 						brush->h += -event.wheel.y;
 					}
+
+					// Update brush position
+					brush->x = event.wheel.mouseX - (brush->w/2);
+					brush->y = event.wheel.mouseY - (brush->h/2);
 				}
 				break;
 			case SDL_QUIT:
@@ -199,6 +203,7 @@ bool loop() {
 		}
 	}
 
+	// Update canvas
 	SDL_BlitSurface(canvas, NULL, winSurface, NULL);
 
 	// Draw cursor by drawing each bar individually and with different offsets
