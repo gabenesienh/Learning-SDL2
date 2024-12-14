@@ -8,18 +8,34 @@
 using std::cin, std::cout;
 
 bool init();
+bool loop();
 void kill();
 
 SDL_Window* window;
 SDL_Surface* winSurface;
 
+SDL_Event event;
+
 int main(int argc, char** argv) {
 	if (!init()) return 1;
 
-	// Program goes here
+	while (loop()) {}
 
 	kill();
 	return 0;
+}
+
+// Event loop
+bool loop() {
+	while (SDL_PollEvent(&event) != 0) {
+		switch (event.type) {
+			case SDL_QUIT:
+				return false;
+		}
+	}
+	
+	SDL_UpdateWindowSurface(window);
+	return true;
 }
 
 // Initialize SDL
