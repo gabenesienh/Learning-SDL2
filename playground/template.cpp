@@ -10,6 +10,9 @@ bool init();
 bool loop();
 void kill();
 
+const int WINDOW_WIDTH = 960;
+const int WINDOW_HEIGHT = 540;
+
 SDL_Window* window;
 SDL_Surface* winSurface;
 

@@ -1,10 +1,11 @@
 //TODO: remember brush size for every tool
 //TODO: show brush size in pixels
-//TODO: fix gaps when drawing lines
+//TODO: fix gaps when drawing lines (bresenham's line algorithm)
 //TODO: better screen clear effect
 //TODO: change background color
 //TODO: color picker (brush)
 //TODO: color picker (background)
+//TODO: clean up memory leaks from "new"
 
 //TODO-OPT: custom color selector
 //TODO-OPT: brush size slider
@@ -84,6 +85,25 @@ array<array<int, 3>, 10> colors = {{
 // Counts up when holding the "clear canvas" key
 float clearCanvasTimer = 0;
 
+// Stores the mouse's position on the previous frame
+// Used for drawing lines
+struct {
+	Sint32 x;
+	Sint32 y;
+} mousePosLast;
+
+// Brush used to draw each point of a line
+SDL_Rect* lineBrush = new SDL_Rect();
+
+void drawLine(SDL_Surface* canvas, SDL_Rect* brush, Uint32 color) {
+	*lineBrush = *brush;
+
+	lineBrush->x = mousePosLast.x;
+	lineBrush->y = mousePosLast.y;
+
+	SDL_FillRect(canvas, brush, color);
+}
+
 int main(int argc, char** argv) {
 	if (!init()) return 1;
 
@@ -135,6 +155,8 @@ bool loop() {
 				keyStates[event.key.keysym.scancode] = false;
 				break;
 			case SDL_MOUSEMOTION:
+				mousePosLast = {brush->x, brush->y};
+
 				// Center brush on cursor
 				brush->x = event.motion.x - (brush->w/2);
 				brush->y = event.motion.y - (brush->h/2);
@@ -148,18 +170,18 @@ bool loop() {
 				if (mouseLeftPressed) {
 					switch (brushMode) {
 						case TOOL_BRUSH:
+							// Paint the canvas
 							{
-								// Paint the canvas
 								int r = colors[brushColor][0];
 								int g = colors[brushColor][1];
 								int b = colors[brushColor][2];
 
-								SDL_FillRect(canvas, brush, SDL_MapRGB(canvas->format, r, g, b));
+								drawLine(canvas, brush, SDL_MapRGB(canvas->format, r, g, b));
 								break;
 							}
 						case TOOL_ERASER:
 							// Erase by painting the background color
-							SDL_FillRect(canvas, brush, bgColorValue);
+							drawLine(canvas, brush, bgColorValue);
 							break;
 					} 
 				}
@@ -174,6 +196,10 @@ bool loop() {
 						mouseRightPressed = true;
 						break;
 				}
+
+				// For the first frame of drawing, reset the last mouse
+				// position
+				mousePosLast = {event.button.x, event.button.y};
 				break;
 			case SDL_MOUSEBUTTONUP:
 				switch (event.button.button) {
