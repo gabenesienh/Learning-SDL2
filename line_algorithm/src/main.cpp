@@ -1,10 +1,14 @@
-// Bresenham's line algorithm
+// Line drawing algorithm
 // Made for use in Worseprite
+
+// TODO: implement bresenham's algorithm
 
 #include <SDL2/SDL.h>
 #include <iostream>
+#include <cmath>
 
 using std::cin, std::cout;
+using std::abs, std::max;
 
 bool init();
 bool loop();
@@ -67,20 +71,34 @@ bool loop() {
 	SDL_FillRect(winSurface, NULL, SDL_MapRGB(winSurface->format, 0, 0, 0));
 
 	if (mousePressed) {
-		// Draw a line to the cursor, one pixel at a time
-		for (Sint32 pixelX = anchorPos.x; pixelX < mousePos.x; pixelX++) {
-			// How far the cursor is from the anchor point
-			Sint32 lineLengthX = mousePos.x - anchorPos.x;
-			Sint32 lineLengthY = mousePos.y - anchorPos.y;
+		// Draw a line to the cursor
 
-			// How much Y varies per X
-			double ratio = static_cast<float>(lineLengthY) / lineLengthX;
+		// Start and end coordinates for the line
+		Sint32 x0 = anchorPos.x;
+		Sint32 y0 = anchorPos.y;
+		Sint32 x1 = mousePos.x;
+		Sint32 y1 = mousePos.y;
 
-			// Calculate the desired pixel Y value for every pixel X value
-			Sint32 pixelY = anchorPos.y + (pixelX - anchorPos.x)*ratio;
+		// Delta values (how far the cursor is from the anchor point)
+		Sint32 dx = x1 - x0;
+		Sint32 dy = y1 - y0;
 
-			lineBrush->x = pixelX;
-			lineBrush->y = pixelY;
+		// Get the magnitude of the largest delta of the line
+		// This makes it easy to adjust for all octants
+		Sint32 step = max(abs(dx), abs(dy));
+
+		for (int i = 0; i <= step; i++) {
+			// Avoid division by 0 error
+			if (step == 0) break;
+
+			//double m = static_cast<double>(dy) / dx;
+
+			// One of these will be 1, the other will be the slope
+			double stepX = static_cast<double>(dx) / step;
+			double stepY = static_cast<double>(dy) / step;
+
+			lineBrush->x = x0 + i * stepX;
+			lineBrush->y = y0 + i * stepY;
 
 			SDL_FillRect(winSurface, lineBrush, SDL_MapRGB(winSurface->format, 255, 255, 255));
 		}
@@ -98,7 +116,7 @@ bool init() {
 		return false;
 	}
 
-	window = SDL_CreateWindow("Bresenham's line algorithm", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WINDOW_WIDTH, WINDOW_HEIGHT, 0);
+	window = SDL_CreateWindow("Line Drawing Algorithm", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WINDOW_WIDTH, WINDOW_HEIGHT, 0);
 	if (!window) {
 		cout << "Error creating window: " << SDL_GetError() << std::endl;
 		system("pause");
