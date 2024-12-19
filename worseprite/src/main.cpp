@@ -1,11 +1,13 @@
+//TODO: make brush and bgColor into classes with methods
 //TODO: remember brush size for every tool
 //TODO: show brush size in pixels
-//TODO: fix gaps when drawing lines (bresenham's line algorithm)
 //TODO: better screen clear effect
 //TODO: change background color
 //TODO: color picker (brush)
 //TODO: color picker (background)
 //TODO: clean up memory leaks from "new"
+//TODO: refactor code into smaller functions
+//TODO: avoid duplicated linealg files
 
 //TODO-OPT: custom color selector
 //TODO-OPT: brush size slider
@@ -15,6 +17,7 @@
 #include <SDL2/SDL.h>
 #include <iostream>
 #include <array>
+#include "linealg.h"
 
 using std::cin, std::cout;
 using std::array;
@@ -64,6 +67,8 @@ enum eToolTypes {
 	TOOL_COUNT // Not a tool! Use only for getting the size of this enum
 };
 
+const int DEFAULT_BRUSH_SIZE = 5;
+
 //array<SDL_Rect*, TOOL_COUNT> brushes;
 SDL_Rect* brush;
 int brushColor = 9;
@@ -85,30 +90,22 @@ array<array<int, 3>, 10> colors = {{
 // Counts up when holding the "clear canvas" key
 float clearCanvasTimer = 0;
 
-// Stores the mouse's position on the previous frame
+// Stores the mouse's position on the current and previous frames
 // Used for drawing lines
+struct {
+	Sint32 x;
+	Sint32 y;
+} mousePos;
 struct {
 	Sint32 x;
 	Sint32 y;
 } mousePosLast;
 
-// Brush used to draw each point of a line
-SDL_Rect* lineBrush = new SDL_Rect();
-
-void drawLine(SDL_Surface* canvas, SDL_Rect* brush, Uint32 color) {
-	*lineBrush = *brush;
-
-	lineBrush->x = mousePosLast.x;
-	lineBrush->y = mousePosLast.y;
-
-	SDL_FillRect(canvas, brush, color);
-}
-
 int main(int argc, char** argv) {
 	if (!init()) return 1;
 
 	bgColorValue = SDL_MapRGB(canvas->format, bgColor.r, bgColor.g, bgColor.b);
-	brush = new SDL_Rect {0, 0, 5, 5};
+	brush = new SDL_Rect {0, 0, DEFAULT_BRUSH_SIZE, DEFAULT_BRUSH_SIZE};
 
 	SDL_ShowCursor(SDL_DISABLE);
 	SDL_FillRect(canvas, NULL, bgColorValue);
@@ -155,11 +152,12 @@ bool loop() {
 				keyStates[event.key.keysym.scancode] = false;
 				break;
 			case SDL_MOUSEMOTION:
-				mousePosLast = {brush->x, brush->y};
+				mousePosLast = {mousePos.x, mousePos.y};
+				mousePos = {event.motion.x, event.motion.y};
 
 				// Center brush on cursor
-				brush->x = event.motion.x - (brush->w/2);
-				brush->y = event.motion.y - (brush->h/2);
+				brush->x = mousePos.x - (brush->w/2);
+				brush->y = mousePos.y - (brush->h/2);
 
 				if (mouseLeftPressed && mouseRightPressed) {
 					// Cancel out M1 + M2
@@ -167,6 +165,7 @@ bool loop() {
 					mouseRightPressed = false;
 				}
 
+				// Check if the brush is currently being used
 				if (mouseLeftPressed) {
 					switch (brushMode) {
 						case TOOL_BRUSH:
@@ -176,12 +175,16 @@ bool loop() {
 								int g = colors[brushColor][1];
 								int b = colors[brushColor][2];
 
-								drawLine(canvas, brush, SDL_MapRGB(canvas->format, r, g, b));
+								drawLine(canvas, brush, SDL_MapRGB(canvas->format, r, g, b),
+										 mousePosLast.x, mousePosLast.y,
+										 mousePos.x, mousePos.y);
 								break;
 							}
 						case TOOL_ERASER:
 							// Erase by painting the background color
-							drawLine(canvas, brush, bgColorValue);
+							drawLine(canvas, brush, bgColorValue,
+									 mousePosLast.x, mousePosLast.y,
+									 mousePos.x, mousePos.y);
 							break;
 					} 
 				}
@@ -313,5 +316,6 @@ bool init() {
 // Quit SDL2
 void kill() {
 	SDL_DestroyWindow(window);
+	delete brush;
 	SDL_Quit();
 }
