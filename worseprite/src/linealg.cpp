@@ -1,8 +1,3 @@
-// Line drawing algorithm
-// Made for use in Worseprite
-
-// TODO: implement bresenham's algorithm
-
 #include "linealg.h"
 
 #include <SDL2/SDL.h>

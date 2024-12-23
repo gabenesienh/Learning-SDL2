@@ -31,6 +31,8 @@ const int WINDOW_WIDTH = 960;
 const int WINDOW_HEIGHT = 540;
 const float CLEAR_CANVAS_DELAY = 0.5; // In seconds
 const int DEFAULT_BRUSH_SIZE = 5;
+const int MIN_BRUSH_SIZE = 1;
+const int MAX_BRUSH_SIZE = 64;
 
 SDL_Window* window;
 SDL_Surface* winSurface;
@@ -54,12 +56,9 @@ bool mouseRightPressed = false; // Currently unused
 
 // General color class, used for brush and background
 class Color {
-	private:
+	protected:
 		array<int, 3> rgbValue = {255, 255, 255};
 	public:
-		Color(int r, int g, int b) {
-			this->rgbValue = {r, g, b};
-		}
 		Color(array<int, 3> rgb) {
 			this->rgbValue = rgb;
 		}
@@ -68,8 +67,8 @@ class Color {
 			return this->rgbValue;
 		}
 
-		void setValue(int r, int g, int b) {
-			this->rgbValue = {r, g, b};
+		void setValue(array<int, 3> rgb) {
+			this->rgbValue = rgb;
 		}
 
 		Uint32 getFormattedValue(SDL_PixelFormat* format) const {
@@ -90,7 +89,7 @@ array<array<int, 3>, 10> colors = {{
 	{0, 0, 0}			// Black (default for brush)
 }};
 
-Color bgColor = Color(255, 255, 255);
+Color bgColor = Color({255, 255, 255});
 
 enum {
 	TOOL_BRUSH,	// Default
@@ -99,15 +98,49 @@ enum {
 	TOOL_COUNT // Not a tool! Use only for getting the size of this enum
 } eToolTypes;
 
-//array<SDL_Rect*, TOOL_COUNT> brushes;
-SDL_Rect* brush;
-int brushColor = 9;
-int brushMode = TOOL_BRUSH;
+// Brush you move with the cursor
+class {
+	private:
+		int mode = TOOL_BRUSH;
+		SDL_Rect* rect = new SDL_Rect {0, 0, DEFAULT_BRUSH_SIZE, DEFAULT_BRUSH_SIZE};
+		Color color = Color(colors[9]);
+	public:
+		int           getMode() const  { return this->mode; }
+		int 		  getX() const     { return this->rect->x; }
+		int 		  getY() const     { return this->rect->y; }
+		int 		  getSize() const  { return this->rect->h; }
+		SDL_Rect* 	  getRect() const  { return this->rect; } //get rekt
+		array<int, 3> getColor() const { return this->color.getValue(); }
+		Uint32 		  getFormattedColor(SDL_PixelFormat* format) const {
+			return this->color.getFormattedValue(format);
+		}
+
+		void setMode(int mode) {
+			if (mode >= 0 && mode < TOOL_COUNT) {
+				this->mode = mode;
+			}
+		}
+		void setX(int x) {
+			this->rect->x = x;
+		}
+		void setY(int y) {
+			this->rect->y = y;
+		}
+		void setSize(int size) {
+			if (size > MIN_BRUSH_SIZE && size <= MAX_BRUSH_SIZE) {
+				this->rect->w = size;
+				this->rect->h = size;
+			}
+		}
+		void setColor(array<int, 3> rgb) {
+			this->color.setValue(rgb);
+		}
+} brush;
 
 // Counts up when holding the "clear canvas" key
 float clearCanvasTimer = 0;
 
-// Stores the mouse's position on the current and previous frames
+// Stores the mouse's position on the current frame and previous frame
 // Used for drawing lines
 struct {
 	Sint32 x;
@@ -129,8 +162,6 @@ array<SDL_Rect*, 4> cursorSegments = {
 int main(int argc, char** argv) {
 	if (!init()) return 1;
 
-	brush = new SDL_Rect {0, 0, DEFAULT_BRUSH_SIZE, DEFAULT_BRUSH_SIZE};
-
 	SDL_ShowCursor(SDL_DISABLE);
 	SDL_FillRect(canvas, NULL, bgColor.getFormattedValue(canvas->format));
 
@@ -149,8 +180,8 @@ bool loop() {
 		switch (event.type) {
 			case SDL_KEYDOWN:
 				switch (event.key.keysym.scancode) {
-					case SDL_SCANCODE_B: brushMode = TOOL_BRUSH;  break;
-					case SDL_SCANCODE_E: brushMode = TOOL_ERASER; break;
+					case SDL_SCANCODE_B: brush.setMode(TOOL_BRUSH);  break;
+					case SDL_SCANCODE_E: brush.setMode(TOOL_ERASER); break;
 
 					case SDL_SCANCODE_1:
 					case SDL_SCANCODE_2:
@@ -162,7 +193,7 @@ bool loop() {
 					case SDL_SCANCODE_8:
 					case SDL_SCANCODE_9:
 					case SDL_SCANCODE_0:
-						brushColor = event.key.keysym.scancode - SDL_SCANCODE_1;
+						brush.setColor(colors[event.key.keysym.scancode - SDL_SCANCODE_1]);
 						break;
 				}
 
@@ -180,8 +211,8 @@ bool loop() {
 				mousePos = {event.motion.x, event.motion.y};
 
 				// Center brush on cursor
-				brush->x = mousePos.x - (brush->w/2);
-				brush->y = mousePos.y - (brush->h/2);
+				brush.setX(mousePos.x - (brush.getSize()/2));
+				brush.setY(mousePos.y - (brush.getSize()/2));
 
 				handleTools();
 
@@ -213,14 +244,11 @@ bool loop() {
 			case SDL_MOUSEWHEEL:
 				if (keyStates[SDL_SCANCODE_LCTRL]) {
 					// Resize brush
-					if (brush->w - event.wheel.y > 1 && brush->w - event.wheel.y <= 64) {
-						brush->w += -event.wheel.y;
-						brush->h += -event.wheel.y;
-					}
+					brush.setSize(brush.getSize() - event.wheel.y);
 
 					// Update brush position
-					brush->x = event.wheel.mouseX - (brush->w/2);
-					brush->y = event.wheel.mouseY - (brush->h/2);
+					brush.setX(event.wheel.mouseX - (brush.getSize()/2));
+					brush.setY(event.wheel.mouseY - (brush.getSize()/2));
 				}
 				break;
 			case SDL_QUIT:
@@ -232,10 +260,10 @@ bool loop() {
 	SDL_BlitSurface(canvas, NULL, winSurface, NULL);
 
 	// Draw cursor by drawing each bar individually and with different offsets
-	*cursorSegments[0] = {brush->x, brush->y - 2, brush->w, 2};
-	*cursorSegments[1] = {brush->x + brush->w, brush->y, 2, brush->h};
-	*cursorSegments[2] = {brush->x, brush->y + brush->h, brush->w, 2};
-	*cursorSegments[3] = {brush->x - 2, brush->y, 2, brush->h};
+	*cursorSegments[0] = {brush.getX(), brush.getY() - 2, brush.getSize(), 2};
+	*cursorSegments[1] = {brush.getX() + brush.getSize(), brush.getY(), 2, brush.getSize()};
+	*cursorSegments[2] = {brush.getX(), brush.getY() + brush.getSize(), brush.getSize(), 2};
+	*cursorSegments[3] = {brush.getX() - 2, brush.getY(), 2, brush.getSize()};
 
 	for (int i = 0; i < cursorSegments.size(); i++) {
 		SDL_FillRect(winSurface, cursorSegments[i], SDL_MapRGB(winSurface->format, 0, 0, 0));
@@ -275,24 +303,20 @@ void handleTools() {
 
 	// Check if the brush is currently being used
 	if (mouseLeftPressed) {
-		switch (brushMode) {
+		switch (brush.getMode()) {
 			case TOOL_BRUSH:
 				// Paint the canvas
 				{
-					int r = colors[brushColor][0];
-					int g = colors[brushColor][1];
-					int b = colors[brushColor][2];
-
-					drawLine(canvas, brush, SDL_MapRGB(canvas->format, r, g, b),
-								mousePosLast.x, mousePosLast.y,
-								mousePos.x, mousePos.y);
+					drawLine(canvas, brush.getRect(), brush.getFormattedColor(canvas->format),
+							 mousePosLast.x, mousePosLast.y,
+							 mousePos.x, mousePos.y);
 					break;
 				}
 			case TOOL_ERASER:
 				// Erase by painting the background color
-				drawLine(canvas, brush, bgColor.getFormattedValue(canvas->format),
-							mousePosLast.x, mousePosLast.y,
-							mousePos.x, mousePos.y);
+				drawLine(canvas, brush.getRect(), bgColor.getFormattedValue(canvas->format),
+						 mousePosLast.x, mousePosLast.y,
+						 mousePos.x, mousePos.y);
 				break;
 		}
 	}
@@ -349,7 +373,7 @@ bool init() {
 // Quit SDL2
 void kill() {
 	SDL_DestroyWindow(window);
-	delete brush;
+	delete brush.getRect();
 	delete cursorSegments[0];
 	delete cursorSegments[1];
 	delete cursorSegments[2];
