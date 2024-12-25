@@ -154,12 +154,12 @@ struct {
 } mousePosLast;
 
 // The individual lines that make up the box-shaped cursor
-array<SDL_Rect*, 4> cursorSegments = {
-	new SDL_Rect{0, 0, 1, 1},
-	new SDL_Rect{0, 0, 1, 1},
-	new SDL_Rect{0, 0, 1, 1},
-	new SDL_Rect{0, 0, 1, 1},
-};
+array<SDL_Rect, 4> cursorSegments = {{
+	{0, 0, 1, 1},
+	{0, 0, 1, 1},
+	{0, 0, 1, 1},
+	{0, 0, 1, 1},
+}};
 
 int main(int argc, char** argv) {
 	if (!init()) return 1;
@@ -271,16 +271,16 @@ bool loop() {
 // Draw the box outline around the brush
 void drawCursor() {
 	// Draw cursor by drawing each bar individually and with different offsets
-	*cursorSegments[0] = {brush.getX(), brush.getY() - 2, brush.getSize(), 2};
-	*cursorSegments[1] = {brush.getX() + brush.getSize(), brush.getY(), 2, brush.getSize()};
-	*cursorSegments[2] = {brush.getX(), brush.getY() + brush.getSize(), brush.getSize(), 2};
-	*cursorSegments[3] = {brush.getX() - 2, brush.getY(), 2, brush.getSize()};
+	cursorSegments[0] = {brush.getX(), brush.getY() - 2, brush.getSize(), 2};
+	cursorSegments[1] = {brush.getX() + brush.getSize(), brush.getY(), 2, brush.getSize()};
+	cursorSegments[2] = {brush.getX(), brush.getY() + brush.getSize(), brush.getSize(), 2};
+	cursorSegments[3] = {brush.getX() - 2, brush.getY(), 2, brush.getSize()};
 
 	// Black cursor when drawing, brush color when not
 	Color cursorColor = (mouseLeftPressed ? colors[9] : brush.getColor());
 
 	for (int i = 0; i < cursorSegments.size(); i++) {
-		SDL_FillRect(winSurface, cursorSegments[i], cursorColor.getFormattedValue(canvas->format));
+		SDL_FillRect(winSurface, &cursorSegments[i], cursorColor.getFormattedValue(canvas->format));
 	}
 }
 
@@ -387,10 +387,5 @@ bool init() {
 // Quit SDL2
 void kill() {
 	SDL_DestroyWindow(window);
-	delete brush.getRect();
-	delete cursorSegments[0];
-	delete cursorSegments[1];
-	delete cursorSegments[2];
-	delete cursorSegments[3];
 	SDL_Quit();
 }
