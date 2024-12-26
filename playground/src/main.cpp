@@ -19,6 +19,9 @@ SDL_Surface* winSurface;
 
 SDL_Event event;
 
+// Uint64 ticksLast = 0;
+// float deltaTime = 0; // In seconds
+
 int main(int argc, char** argv) {
 	if (!init()) return 1;
 
@@ -30,6 +33,9 @@ int main(int argc, char** argv) {
 
 // Event loop
 bool loop() {
+	// deltaTime = static_cast<float>(SDL_GetTicks64() - ticksLast)/1000;
+	// ticksLast = SDL_GetTicks64();
+
 	while (SDL_PollEvent(&event) != 0) {
 		switch (event.type) {
 			case SDL_QUIT:
@@ -49,7 +55,7 @@ bool init() {
 		return false;
 	}
 
-	window = SDL_CreateWindow("Template", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 960, 540, 0);
+	window = SDL_CreateWindow("Template", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WINDOW_WIDTH, WINDOW_HEIGHT, 0);
 	if (!window) {
 		cout << "Error creating window: " << SDL_GetError() << std::endl;
 		system("pause");

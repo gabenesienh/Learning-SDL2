@@ -25,7 +25,7 @@ void kill();
 
 void drawCursor();
 void handleTools();
-void handleClear();
+void handleCanvasClear();
 
 const int WINDOW_WIDTH = 960;
 const int WINDOW_HEIGHT = 540;
@@ -43,7 +43,7 @@ SDL_Event event;
 // Saves the value of SDL_GetPerformanceCounter() from previous frame
 // Used for calculating delta time
 Uint64 ticksLast = 0;
-float deltaTime = 0; // In milliseconds
+float deltaTime = 0; // In seconds
 
 // Copy values from keyboard events
 array<bool, SDL_NUM_SCANCODES> keyStates = {false};
@@ -84,8 +84,8 @@ array<Color, 10> colors = {{
 	Color({66, 135, 245}),		// Blue
 	Color({52, 57, 201}),		// Indigo
 	Color({145, 75, 242}),		// Purple
-	Color({252, 96, 185}), 	// Pink
-	Color({127, 127, 127}),	// Gray
+	Color({252, 96, 185}), 		// Pink
+	Color({127, 127, 127}),		// Gray
 	Color({0, 0, 0})			// Black (default for brush)
 }};
 
@@ -262,7 +262,7 @@ bool loop() {
 	SDL_BlitSurface(canvas, NULL, winSurface, NULL);
 
 	drawCursor();
-	handleClear();
+	handleCanvasClear();
 
 	SDL_UpdateWindowSurface(window);
 	return true;
@@ -314,7 +314,7 @@ void handleTools() {
 }
 
 // Canvas clearing logic
-void handleClear() {
+void handleCanvasClear() {
 	if (clearCanvasTimer != -1) {
 		if (keyStates[SDL_SCANCODE_SPACE]) {
 			if (clearCanvasTimer <= CLEAR_CANVAS_DELAY) {
