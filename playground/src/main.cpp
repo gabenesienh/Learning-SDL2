@@ -60,6 +60,10 @@ int main(int argc, char** argv) {
 // Event loop
 bool loop() {
 	deltaTime = static_cast<float>(SDL_GetTicks64() - ticksLast)/1000;
+
+	// Cap the framerate at 60 FPS so it doesn't crash the GPU driver (lmao)
+	if (deltaTime < 0.017) return true;
+
 	ticksLast = SDL_GetTicks64();
 
 	while (SDL_PollEvent(&event) != 0) {

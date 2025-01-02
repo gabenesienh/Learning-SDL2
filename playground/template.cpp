@@ -33,6 +33,9 @@ int main(int argc, char** argv) {
 // Event loop
 bool loop() {
 	// deltaTime = static_cast<float>(SDL_GetTicks64() - ticksLast)/1000;
+
+	// if (deltaTime < 0.017) return true; // Framerate cap
+
 	// ticksLast = SDL_GetTicks64();
 
 	while (SDL_PollEvent(&event) != 0) {
