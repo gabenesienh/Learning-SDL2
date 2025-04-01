@@ -10,6 +10,7 @@ bool init();
 bool loop();
 void kill();
 
+// const float TARGET_FRAMERATE = 15;
 const int WINDOW_WIDTH = 960;
 const int WINDOW_HEIGHT = 540;
 
@@ -34,7 +35,7 @@ int main(int argc, char** argv) {
 bool loop() {
 	// deltaTime = static_cast<float>(SDL_GetTicks64() - ticksLast)/1000;
 
-	// if (deltaTime < 0.017) return true; // Framerate cap
+	// if (deltaTime < 1/TARGET_FRAMERATE) return true; // Framerate cap
 
 	// ticksLast = SDL_GetTicks64();
 
