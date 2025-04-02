@@ -1,6 +1,13 @@
 // Simple snake game
-// Move with arrow keys
-// (WIP)
+// Move with arrow keys and collect apples
+
+//TODO: fix private attributes being settable
+//TODO: collisions
+//TODO: apples
+//TODO: game over
+
+//TODO-OPT: input buffer
+//TODO-OPT: score tracking
 
 #include <SDL2/SDL.h>
 #include <iostream>
@@ -25,13 +32,17 @@ const int WINDOW_HEIGHT = 480;
 const int GRID_SIZE = 12;
 const array<int, 3> COLOR_SNAKE_RGB = {255, 255, 255};
 const array<int, 3> COLOR_BACKGROUND_RGB = {0, 0, 0};
-const int SNAKE_NONE = 0;
-const int SNAKE_UP = 1;
-const int SNAKE_RIGHT = 2;
-const int SNAKE_DOWN = 3;
-const int SNAKE_LEFT = 4;
 const int START_X = WINDOW_WIDTH/2/GRID_SIZE;
 const int START_Y = WINDOW_HEIGHT/2/GRID_SIZE;
+const int SNAKE_NONE = 0;
+const int SNAKE_UP = 1;
+const int SNAKE_DOWN = 2;
+const int SNAKE_LEFT = 3;
+const int SNAKE_RIGHT = 4;
+const int GS_LAUNCHED = 0;
+const int GS_PLAYING = 1;
+const int GS_GAMEOVER = 2;
+const float FLICKER_LOOP_DELAY = 1; // In seconds
 
 SDL_Window* window;
 SDL_Surface* winSurface;
@@ -39,17 +50,24 @@ SDL_Surface* gameSurface;
 
 SDL_Event event;
 
-// Rect used for blitting everything to the screen, respecting the grid
-SDL_Rect rendererRect = {0, 0, GRID_SIZE, GRID_SIZE};
-
 Uint64 ticksLast = 0;
 float deltaTime = 0; // In seconds
+
+// For blitting everything to the screen, respecting the grid
+SDL_Rect rendererRect = {0, 0, GRID_SIZE, GRID_SIZE};
 
 // For saving keyboard inputs
 array<bool, SDL_NUM_SCANCODES> keyStates = {false};
 
 // For saving keyboard inputs for one frame
 array<bool, SDL_NUM_SCANCODES> keyStatesTap = {false};
+
+// Global game state, defines what part of the game logic should run
+int gameState = GS_LAUNCHED;
+
+// Global object flickering timer, affected objects are invisible whenever the
+// timer is on its higher half (i.e. higher than FLICKER_LOOP_DELAY/2)
+float flickerTimer = 0;
 
 // Represents a piece of the snake (head or body)
 class SnakeSegment {
@@ -77,7 +95,7 @@ class SnakeSegment {
 		}
 };
 
-// The movable snake
+// The snake the player controls
 class {
 	private:
 		int direction = SNAKE_NONE;
@@ -85,24 +103,23 @@ class {
 			SnakeSegment(START_X, START_Y),
 			SnakeSegment(START_X, START_Y),
 			SnakeSegment(START_X, START_Y),
-			SnakeSegment(START_X, START_Y),
-			SnakeSegment(START_X, START_Y),
 			SnakeSegment(START_X, START_Y)
 		};
 
-		// The current segment at the head of the snake
+		// The segment currently at the head of the snake
 		list<SnakeSegment>::iterator head = this->segments.begin();
 	public:
 		int 				getDirection() const { return this->direction; }
 		list<SnakeSegment>&	getSegments()		 { return this->segments; }
+		const SnakeSegment& getHead()			 { return *this->head; }
 
 		void turn(int direction) {
 			// Disable 180 degree turns
 			if (
-				   this->direction == SNAKE_LEFT && direction == SNAKE_RIGHT
-				|| this->direction == SNAKE_RIGHT && direction == SNAKE_LEFT
-				|| this->direction == SNAKE_UP && direction == SNAKE_DOWN
+				   this->direction == SNAKE_UP && direction == SNAKE_DOWN
 				|| this->direction == SNAKE_DOWN && direction == SNAKE_UP
+				|| this->direction == SNAKE_LEFT && direction == SNAKE_RIGHT
+				|| this->direction == SNAKE_RIGHT && direction == SNAKE_LEFT
 			) {
 				return;
 			}
@@ -126,14 +143,11 @@ class {
 				this->head = this->segments.begin();
 			}
 
+			// Teleport the new head to the front of the previous one
 			switch (this->direction) {
 				case SNAKE_UP:
 					this->head->setX(headX);
 					this->head->setY(headY - 1);
-					break;
-				case SNAKE_RIGHT:
-					this->head->setX(headX + 1);
-					this->head->setY(headY);
 					break;
 				case SNAKE_DOWN:
 					this->head->setX(headX);
@@ -141,6 +155,10 @@ class {
 					break;
 				case SNAKE_LEFT:
 					this->head->setX(headX - 1);
+					this->head->setY(headY);
+					break;
+				case SNAKE_RIGHT:
+					this->head->setX(headX + 1);
 					this->head->setY(headY);
 					break;
 			}
@@ -196,13 +214,33 @@ bool loop() {
 
 // Game logic
 void game() {
-	  if 		(keyStatesTap[SDL_SCANCODE_UP])		{ snake.turn(SNAKE_UP);
-	} else if	(keyStatesTap[SDL_SCANCODE_RIGHT])	{ snake.turn(SNAKE_RIGHT);
-	} else if	(keyStatesTap[SDL_SCANCODE_DOWN])	{ snake.turn(SNAKE_DOWN);
-	} else if	(keyStatesTap[SDL_SCANCODE_LEFT])	{ snake.turn(SNAKE_LEFT);
+	switch (gameState) {
+		case GS_LAUNCHED:
+			flickerTimer += 1*deltaTime;
+
+			if (flickerTimer > FLICKER_LOOP_DELAY) {
+				flickerTimer -= FLICKER_LOOP_DELAY;
+			}
+
+			if (keyStatesTap[SDL_SCANCODE_SPACE]
+			||  keyStatesTap[SDL_SCANCODE_RETURN]) {
+				gameState = GS_PLAYING;
+				flickerTimer = 0;
+			}
+
+			break;
+		case GS_PLAYING:
+			if		(keyStatesTap[SDL_SCANCODE_UP])		{ snake.turn(SNAKE_UP); }
+			else if	(keyStatesTap[SDL_SCANCODE_DOWN])	{ snake.turn(SNAKE_DOWN); }
+			else if	(keyStatesTap[SDL_SCANCODE_LEFT])	{ snake.turn(SNAKE_LEFT); }
+			else if	(keyStatesTap[SDL_SCANCODE_RIGHT])	{ snake.turn(SNAKE_RIGHT); }
+		
+			snake.move();
+
+			break;
 	}
 
-	snake.move();
+	// Reset tap inputs for the next frame
 	keyStatesTap = {false};
 }
 
@@ -225,12 +263,14 @@ void render() {
 	// Clear screen before drawing
 	SDL_FillRect(gameSurface, NULL, backgroundColor);
 
-	// Draw all segments
-	for (auto &segment : snake.getSegments()) {
-		rendererRect.x = segment.getX()*GRID_SIZE;
-		rendererRect.y = segment.getY()*GRID_SIZE;
+	// Draw all segments whenever the flicker timer isn't supposed to hide them
+	if (flickerTimer <= FLICKER_LOOP_DELAY/2) {
+		for (auto &segment : snake.getSegments()) {
+			rendererRect.x = segment.getX()*GRID_SIZE;
+			rendererRect.y = segment.getY()*GRID_SIZE;
 
-		SDL_FillRect(gameSurface, &rendererRect, snakeColor);
+			SDL_FillRect(gameSurface, &rendererRect, snakeColor);
+		}
 	}
 }
 
@@ -242,7 +282,7 @@ bool init() {
 		return false;
 	}
 
-	window = SDL_CreateWindow("Template", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WINDOW_WIDTH, WINDOW_HEIGHT, 0);
+	window = SDL_CreateWindow("Snake", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WINDOW_WIDTH, WINDOW_HEIGHT, 0);
 	if (!window) {
 		cout << "Error creating window: " << SDL_GetError() << endl;
 		system("pause");
