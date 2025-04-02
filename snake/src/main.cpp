@@ -20,8 +20,8 @@ void render();
 void kill();
 
 const float TARGET_FRAMERATE = 10;
-const int WINDOW_WIDTH = 960;
-const int WINDOW_HEIGHT = 540;
+const int WINDOW_WIDTH = 480;
+const int WINDOW_HEIGHT = 480;
 const int GRID_SIZE = 12;
 const array<int, 3> COLOR_SNAKE_RGB = {255, 255, 255};
 const array<int, 3> COLOR_BACKGROUND_RGB = {0, 0, 0};
@@ -30,6 +30,8 @@ const int SNAKE_UP = 1;
 const int SNAKE_RIGHT = 2;
 const int SNAKE_DOWN = 3;
 const int SNAKE_LEFT = 4;
+const int START_X = WINDOW_WIDTH/2/GRID_SIZE;
+const int START_Y = WINDOW_HEIGHT/2/GRID_SIZE;
 
 SDL_Window* window;
 SDL_Surface* winSurface;
@@ -67,11 +69,11 @@ class SnakeSegment {
 			return this->y;
 		}
 
-		void addX(int x) {
-			this->x += x;
+		void setX(int x) {
+			this->x = x;
 		}
-		void addY(int y) {
-			this->y += y;
+		void setY(int y) {
+			this->y = y;
 		}
 };
 
@@ -80,35 +82,66 @@ class {
 	private:
 		int direction = SNAKE_NONE;
 		list<SnakeSegment> segments = {
-			SnakeSegment(WINDOW_WIDTH/2/GRID_SIZE, WINDOW_HEIGHT/2/GRID_SIZE),
-			SnakeSegment(WINDOW_WIDTH/2/GRID_SIZE, WINDOW_HEIGHT/2/GRID_SIZE),
-			SnakeSegment(WINDOW_WIDTH/2/GRID_SIZE, WINDOW_HEIGHT/2/GRID_SIZE)
+			SnakeSegment(START_X, START_Y),
+			SnakeSegment(START_X, START_Y),
+			SnakeSegment(START_X, START_Y),
+			SnakeSegment(START_X, START_Y),
+			SnakeSegment(START_X, START_Y),
+			SnakeSegment(START_X, START_Y)
 		};
 
-		// The current head of the snake
+		// The current segment at the head of the snake
 		list<SnakeSegment>::iterator head = this->segments.begin();
 	public:
 		int 				getDirection() const { return this->direction; }
 		list<SnakeSegment>&	getSegments()		 { return this->segments; }
 
 		void turn(int direction) {
+			// Disable 180 degree turns
+			if (
+				   this->direction == SNAKE_LEFT && direction == SNAKE_RIGHT
+				|| this->direction == SNAKE_RIGHT && direction == SNAKE_LEFT
+				|| this->direction == SNAKE_UP && direction == SNAKE_DOWN
+				|| this->direction == SNAKE_DOWN && direction == SNAKE_UP
+			) {
+				return;
+			}
+
 			this->direction = direction;
 		}
 		void move() {
 			if (this->direction == SNAKE_NONE) return;
 
+			// Save coordinates of the current head
+			int headX = (*this->head).getX();
+			int headY = (*this->head).getY();
+
+			// Set the head to be the next segment in the list, which will
+			// always be the segment at the tip of the tail
+			this->head++;
+
+			// Loop around and pick the first element if it's trying to choose
+			// an element beyond the end boundary
+			if (this->head == this->segments.end()) {
+				this->head = this->segments.begin();
+			}
+
 			switch (this->direction) {
 				case SNAKE_UP:
-					this->head->addY(-1);
+					this->head->setX(headX);
+					this->head->setY(headY - 1);
 					break;
 				case SNAKE_RIGHT:
-					this->head->addX(1);
+					this->head->setX(headX + 1);
+					this->head->setY(headY);
 					break;
 				case SNAKE_DOWN:
-					this->head->addY(1);
+					this->head->setX(headX);
+					this->head->setY(headY + 1);
 					break;
 				case SNAKE_LEFT:
-					this->head->addX(-1);
+					this->head->setX(headX - 1);
+					this->head->setY(headY);
 					break;
 			}
 		}
