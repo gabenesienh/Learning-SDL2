@@ -26,17 +26,17 @@ using std::random_device, std::mt19937, std::uniform_int_distribution;
 using std::next;
 
 bool init();
-bool loop();
-void game();
-void render();
+bool doEvents();
+void doGame();
+void doRender();
 void kill();
 
 const float TARGET_FRAMERATE = 10;
-const int WINDOW_WIDTH = 300;
-const int WINDOW_HEIGHT = 300;
-const int GRID_SIZE = 15;
-const int START_X = WINDOW_WIDTH/2/GRID_SIZE;
-const int START_Y = WINDOW_HEIGHT/2/GRID_SIZE;
+const int CELLS_SIZE = 15;
+const int CELLS_HORIZONTAL = 20;
+const int CELLS_VERTICAL = 20;
+const int START_X = CELLS_HORIZONTAL/2;
+const int START_Y = CELLS_VERTICAL/2;
 const int SNAKE_NONE = 0;
 const int SNAKE_UP = 1;
 const int SNAKE_DOWN = 2;
@@ -50,6 +50,8 @@ const array<int, 3> COLOR_BACKGROUND_RGB = {0, 0, 0};
 const array<int, 3> COLOR_SNAKE_RGB = {255, 255, 255};
 const array<int, 3> COLOR_APPLE_RGB = {255, 63, 63};
 
+string checkCellContent(int x, int y);
+
 SDL_Window* window;
 SDL_Surface* winSurface;
 SDL_Surface* gameSurface;
@@ -60,7 +62,7 @@ Uint64 ticksLast = 0;
 float deltaTime = 0; // In seconds
 
 // For blitting everything to the screen, respecting the grid
-SDL_Rect rendererRect = {0, 0, GRID_SIZE, GRID_SIZE};
+SDL_Rect rendererRect = {0, 0, CELLS_SIZE, CELLS_SIZE};
 
 // For saving keyboard inputs
 array<bool, SDL_NUM_SCANCODES> keyStates = {false};
@@ -79,8 +81,8 @@ float flickerTimer = 0;
 mt19937 rng(random_device{}());
 
 // For generating random coordinates within the grid
-uniform_int_distribution<int> distGridX(0, WINDOW_WIDTH/GRID_SIZE - 1);
-uniform_int_distribution<int> distGridY(0, WINDOW_HEIGHT/GRID_SIZE - 1);
+uniform_int_distribution<int> distGridX(0, CELLS_HORIZONTAL - 1);
+uniform_int_distribution<int> distGridY(0, CELLS_VERTICAL - 1);
 
 // Represents a piece of the snake (head or body)
 class SnakeSegment {
@@ -234,20 +236,23 @@ vector<Apple> apples = {};
 int main(int argc, char** argv) {
 	if (!init()) return 1;
 
-	while (loop()) {}
+	while (true) {
+		deltaTime = static_cast<float>(SDL_GetTicks64() - ticksLast)/1000;
+		if (deltaTime < 1/TARGET_FRAMERATE) continue; // Framerate cap
+	
+		ticksLast = SDL_GetTicks64();
+
+		if (!doEvents()) break;
+		doGame();
+		doRender();
+	}
 
 	kill();
 	return 0;
 }
 
 // Event loop
-bool loop() {
-	deltaTime = static_cast<float>(SDL_GetTicks64() - ticksLast)/1000;
-
-	if (deltaTime < 1/TARGET_FRAMERATE) return true; // Framerate cap
-
-	ticksLast = SDL_GetTicks64();
-
+bool doEvents() {
 	while (SDL_PollEvent(&event) != 0) {
 		switch (event.type) {
 			case SDL_QUIT:
@@ -270,16 +275,11 @@ bool loop() {
 		}
 	}
 
-	game();
-	render();
-
-	SDL_BlitSurface(gameSurface, NULL, winSurface, NULL);
-	SDL_UpdateWindowSurface(window);
 	return true;
 }
 
 // Game logic
-void game() {
+void doGame() {
 	switch (gameState) {
 		case GS_LAUNCHED:
 			flickerTimer += 1*deltaTime;
@@ -312,9 +312,18 @@ void game() {
 			for (auto& apple : apples) {
 				if (snakeHead.getX() == apple.getX()
 				&&  snakeHead.getY() == apple.getY()) {
-					// Teleport apple somewhere else
-					apple.setX(distGridX(rng));
-					apple.setY(distGridY(rng));
+					while (true) {
+						// Pick a cell to teleport the apple to
+						int checkX = distGridX(rng);
+						int checkY = distGridY(rng);
+
+						if (checkCellContent(checkX, checkY) == "empty") {
+							// Teleport apple
+							apple.setX(checkX);
+							apple.setY(checkY);
+							break;
+						}
+					}
 
 					snake.grow();
 				}
@@ -328,7 +337,7 @@ void game() {
 }
 
 // Clears screen and draws everything
-void render() {
+void doRender() {
 	Uint32 backgroundColor = SDL_MapRGB(
 		gameSurface->format,
 		COLOR_BACKGROUND_RGB[0],
@@ -355,8 +364,8 @@ void render() {
 
 	// Draw apple(s)
 	for (auto& apple : apples) {
-		rendererRect.x = apple.getX()*GRID_SIZE;
-		rendererRect.y = apple.getY()*GRID_SIZE;
+		rendererRect.x = apple.getX()*CELLS_SIZE;
+		rendererRect.y = apple.getY()*CELLS_SIZE;
 		
 		SDL_FillRect(gameSurface, &rendererRect, appleColor);
 	}
@@ -364,12 +373,36 @@ void render() {
 	// Draw snake parts whenever the flicker timer isn't supposed to hide them
 	if (flickerTimer <= FLICKER_LOOP_DELAY/2) {
 		for (auto& segment : snake.getSegments()) {
-			rendererRect.x = segment.getX()*GRID_SIZE;
-			rendererRect.y = segment.getY()*GRID_SIZE;
+			rendererRect.x = segment.getX()*CELLS_SIZE;
+			rendererRect.y = segment.getY()*CELLS_SIZE;
 
 			SDL_FillRect(gameSurface, &rendererRect, snakeColor);
 		}
 	}
+
+	SDL_BlitSurface(gameSurface, NULL, winSurface, NULL);
+	SDL_UpdateWindowSurface(window);
+}
+
+// Returns what is currently occupying a given cell, or if it's empty
+string checkCellContent(int checkX, int checkY) {
+	// Check for snake segments in the cell
+	for (auto& segment : snake.getSegments()) {
+		if (checkX == segment.getX()
+		&&  checkY == segment.getY()) {
+			return "snake";
+		}
+	}
+
+	// Check for apples in the cell
+	for (auto& apple : apples) {
+		if (checkX == apple.getX()
+		&&  checkY == apple.getY()) {
+			return "apple";
+		}
+	}
+
+	return "empty";
 }
 
 // Initialize SDL
@@ -380,7 +413,14 @@ bool init() {
 		return false;
 	}
 
-	window = SDL_CreateWindow("Snake", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WINDOW_WIDTH, WINDOW_HEIGHT, 0);
+	window = SDL_CreateWindow(
+		"Snake",
+		SDL_WINDOWPOS_UNDEFINED,
+		SDL_WINDOWPOS_UNDEFINED,
+		CELLS_HORIZONTAL*CELLS_SIZE,
+		CELLS_VERTICAL*CELLS_SIZE,
+		0
+	);
 	if (!window) {
 		cout << "Error creating window: " << SDL_GetError() << endl;
 		system("pause");
@@ -397,8 +437,8 @@ bool init() {
 	// Temporary surface, will be formatted into the game surface
 	SDL_Surface* temp = SDL_CreateRGBSurfaceWithFormat(
 		winSurface->flags,
-		WINDOW_WIDTH,
-		WINDOW_HEIGHT,
+		CELLS_HORIZONTAL*CELLS_SIZE,
+		CELLS_HORIZONTAL*CELLS_SIZE,
 		winSurface->format->BitsPerPixel,
 		winSurface->format->format
 	);

@@ -59,7 +59,14 @@ bool init() {
 		return false;
 	}
 
-	window = SDL_CreateWindow("Template", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WINDOW_WIDTH, WINDOW_HEIGHT, 0);
+	window = SDL_CreateWindow(
+		"Template",
+		SDL_WINDOWPOS_UNDEFINED,
+		SDL_WINDOWPOS_UNDEFINED,
+		WINDOW_WIDTH,
+		WINDOW_HEIGHT,
+		0
+	);
 	if (!window) {
 		cout << "Error creating window: " << SDL_GetError() << endl;
 		system("pause");
