@@ -1,10 +1,9 @@
 // Simple snake game
 // Move with arrow keys and collect apples
 
-//TODO: fix private attributes being settable
 //TODO: collisions
-//TODO: apples
 //TODO: game over
+//TODO: rely on delta time instead of a framerate cap
 
 //TODO-OPT: input buffer
 //TODO-OPT: score tracking
@@ -13,12 +12,18 @@
 #include <iostream>
 #include <string>
 #include <array>
+#include <vector>
 #include <list>
+#include <random>
+#include <iterator>
 
 using std::cin, std::cout, std::endl;
 using std::string;
 using std::array;
+using std::vector;
 using std::list;
+using std::random_device, std::mt19937, std::uniform_int_distribution;
+using std::next;
 
 bool init();
 bool loop();
@@ -27,11 +32,9 @@ void render();
 void kill();
 
 const float TARGET_FRAMERATE = 10;
-const int WINDOW_WIDTH = 480;
-const int WINDOW_HEIGHT = 480;
-const int GRID_SIZE = 12;
-const array<int, 3> COLOR_SNAKE_RGB = {255, 255, 255};
-const array<int, 3> COLOR_BACKGROUND_RGB = {0, 0, 0};
+const int WINDOW_WIDTH = 300;
+const int WINDOW_HEIGHT = 300;
+const int GRID_SIZE = 15;
 const int START_X = WINDOW_WIDTH/2/GRID_SIZE;
 const int START_Y = WINDOW_HEIGHT/2/GRID_SIZE;
 const int SNAKE_NONE = 0;
@@ -43,6 +46,9 @@ const int GS_LAUNCHED = 0;
 const int GS_PLAYING = 1;
 const int GS_GAMEOVER = 2;
 const float FLICKER_LOOP_DELAY = 1; // In seconds
+const array<int, 3> COLOR_BACKGROUND_RGB = {0, 0, 0};
+const array<int, 3> COLOR_SNAKE_RGB = {255, 255, 255};
+const array<int, 3> COLOR_APPLE_RGB = {255, 63, 63};
 
 SDL_Window* window;
 SDL_Surface* winSurface;
@@ -69,6 +75,13 @@ int gameState = GS_LAUNCHED;
 // timer is on its higher half (i.e. higher than FLICKER_LOOP_DELAY/2)
 float flickerTimer = 0;
 
+// Random number generator
+mt19937 rng(random_device{}());
+
+// For generating random coordinates within the grid
+uniform_int_distribution<int> distGridX(0, WINDOW_WIDTH/GRID_SIZE - 1);
+uniform_int_distribution<int> distGridY(0, WINDOW_HEIGHT/GRID_SIZE - 1);
+
 // Represents a piece of the snake (head or body)
 class SnakeSegment {
 	private:
@@ -80,10 +93,10 @@ class SnakeSegment {
 			this->y = y;
 		}
 
-		int getX() {
+		int getX() const {
 			return this->x;
 		}
-		int getY() {
+		int getY() const {
 			return this->y;
 		}
 
@@ -98,7 +111,10 @@ class SnakeSegment {
 // The snake the player controls
 class {
 	private:
+		// Direction the snake is facing
 		int direction = SNAKE_NONE;
+
+		// The segments that make up the snake
 		list<SnakeSegment> segments = {
 			SnakeSegment(START_X, START_Y),
 			SnakeSegment(START_X, START_Y),
@@ -108,10 +124,16 @@ class {
 
 		// The segment currently at the head of the snake
 		list<SnakeSegment>::iterator head = this->segments.begin();
+
+		// Stores the position of the tail segment from the previous movement
+		struct {
+			int x;
+			int y;
+		} lastTailPos;
 	public:
-		int 				getDirection() const { return this->direction; }
-		list<SnakeSegment>&	getSegments()		 { return this->segments; }
-		const SnakeSegment& getHead()			 { return *this->head; }
+		int							getDirection() const { return this->direction; }
+		const list<SnakeSegment>&	getSegments() const	 { return this->segments; }
+		const SnakeSegment&			getHead() const		 { return *this->head; }
 
 		void turn(int direction) {
 			// Disable 180 degree turns
@@ -143,6 +165,11 @@ class {
 				this->head = this->segments.begin();
 			}
 
+			// Save the new head segment's position (still positioned at the
+			// tail)
+			this->lastTailPos.x = this->head->getX();
+			this->lastTailPos.y = this->head->getY();
+
 			// Teleport the new head to the front of the previous one
 			switch (this->direction) {
 				case SNAKE_UP:
@@ -163,7 +190,46 @@ class {
 					break;
 			}
 		}
+		void grow() {
+			// Determine where to insert the newly grown segment
+			// Should always be on the tail, that is, the element right after
+			// the head on the segment list
+			auto insertIndex = next(this->head, 1);
+
+			// Loop around and pick the first element if it's trying to choose
+			// an element beyond the end boundary
+			if (insertIndex == this->segments.end()) {
+				insertIndex = this->segments.begin();
+			}
+
+			// Spawn the new segment
+			this->segments.insert(
+				insertIndex,
+				SnakeSegment(this->lastTailPos.x, this->lastTailPos.y)
+			);
+		}
 } snake;
+
+// Apples that increase your length when eaten
+class Apple {
+	private:
+		int x;
+		int y;
+	public:
+		Apple(int x, int y) {
+			this->x = x;
+			this->y = y;
+		}
+
+		int getX() const { return this->x; }
+		int getY() const { return this->y; }
+
+		void setX(int x) { this->x = x; }
+		void setY(int y) { this->y = y; }
+};
+
+// For storing all apples currently in game
+vector<Apple> apples = {};
 
 int main(int argc, char** argv) {
 	if (!init()) return 1;
@@ -226,6 +292,9 @@ void game() {
 			||  keyStatesTap[SDL_SCANCODE_RETURN]) {
 				gameState = GS_PLAYING;
 				flickerTimer = 0;
+
+				// Spawn apple
+				apples.push_back(Apple(distGridX(rng), distGridY(rng)));
 			}
 
 			break;
@@ -236,6 +305,20 @@ void game() {
 			else if	(keyStatesTap[SDL_SCANCODE_RIGHT])	{ snake.turn(SNAKE_RIGHT); }
 		
 			snake.move();
+
+			// Detect if you're eating an apple after moving
+			auto snakeHead = snake.getHead();
+
+			for (auto& apple : apples) {
+				if (snakeHead.getX() == apple.getX()
+				&&  snakeHead.getY() == apple.getY()) {
+					// Teleport apple somewhere else
+					apple.setX(distGridX(rng));
+					apple.setY(distGridY(rng));
+
+					snake.grow();
+				}
+			}
 
 			break;
 	}
@@ -260,12 +343,27 @@ void render() {
 		COLOR_SNAKE_RGB[2]
 	);
 
+	Uint32 appleColor = SDL_MapRGB(
+		gameSurface->format,
+		COLOR_APPLE_RGB[0],
+		COLOR_APPLE_RGB[1],
+		COLOR_APPLE_RGB[2]
+	);
+
 	// Clear screen before drawing
 	SDL_FillRect(gameSurface, NULL, backgroundColor);
 
-	// Draw all segments whenever the flicker timer isn't supposed to hide them
+	// Draw apple(s)
+	for (auto& apple : apples) {
+		rendererRect.x = apple.getX()*GRID_SIZE;
+		rendererRect.y = apple.getY()*GRID_SIZE;
+		
+		SDL_FillRect(gameSurface, &rendererRect, appleColor);
+	}
+
+	// Draw snake parts whenever the flicker timer isn't supposed to hide them
 	if (flickerTimer <= FLICKER_LOOP_DELAY/2) {
-		for (auto &segment : snake.getSegments()) {
+		for (auto& segment : snake.getSegments()) {
 			rendererRect.x = segment.getX()*GRID_SIZE;
 			rendererRect.y = segment.getY()*GRID_SIZE;
 
