@@ -151,7 +151,6 @@ class {
 			this->bufferedDirection = direction;
 			return true;
 		}
-
 		// Returns false when bumping into solid things
 		bool move() {
 			if (this->direction == SNAKE_DIR_NONE
@@ -183,9 +182,21 @@ class {
 					break;
 			}
 
-			if (checkCellContent(targetX, targetY) == "snake"
-			||  checkCellContent(targetX, targetY) == "wall") {
+			if (checkCellContent(targetX, targetY) == "wall") {
 				return false;
+			} else if (checkCellContent(targetX, targetY) == "snake") {
+				auto tail = next(this->head, 1);
+
+				if (tail == this->segments.end()) {
+					tail = this->segments.begin();
+				}
+
+				// If blocked by a body piece, only stop if it's not the tail
+				// The tail would move out of the way next frame anyway, so
+				// this gives the player some more wiggle room
+				if (targetX != tail->getX() || targetY != tail->getY()) {
+					return false;
+				}
 			}
 
 			// Set the head to be the next segment in the list, which will
@@ -228,6 +239,21 @@ class {
 				insertIndex,
 				SnakeSegment(this->lastTailPos.x, this->lastTailPos.y)
 			);
+		}
+		// Return the snake to its starting state
+		void reset() {
+			this->direction = SNAKE_DIR_NONE;
+			this->bufferedDirection = SNAKE_DIR_NONE;
+			this->segments.erase(
+				next(this->segments.begin(), 4),
+				this->segments.end()
+			);
+			this->head = this->segments.begin();
+
+			for (auto& segment : this->segments) {
+				segment.setX(START_X);
+				segment.setY(START_Y);
+			}
 		}
 } snake;
 
@@ -328,6 +354,7 @@ void doGame() {
 				// Attempt to move the snake
 				if (!snake.move()) {
 					gameState = GS_GAMEOVER;
+					flickerTimer = FLICKER_LOOP_DELAY/2;
 					break;
 				}
 
@@ -364,6 +391,15 @@ void doGame() {
 
 			if (flickerTimer > FLICKER_LOOP_DELAY) {
 				flickerTimer -= FLICKER_LOOP_DELAY;
+			}
+
+			if (keyStatesTap[SDL_SCANCODE_SPACE]
+			||  keyStatesTap[SDL_SCANCODE_RETURN]) {
+				gameState = GS_LAUNCHED;
+				flickerTimer = 0;
+
+				snake.reset();
+				apples.clear();
 			}
 
 			break;
