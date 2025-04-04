@@ -1,10 +1,6 @@
 // Simple snake game
 // Move with arrow keys and collect apples
 
-//TODO: collisions
-//TODO: rely on delta time instead of a framerate cap
-
-//TODO-OPT: input buffer
 //TODO-OPT: score tracking
 
 #include <SDL2/SDL.h>
@@ -30,24 +26,25 @@ void doGame();
 void doRender();
 void kill();
 
-const float TARGET_FRAMERATE = 8;
 const int CELLS_SIZE = 15;
 const int CELLS_HORIZONTAL = 17;
 const int CELLS_VERTICAL = 17;
 const int START_X = CELLS_HORIZONTAL/2;
 const int START_Y = CELLS_VERTICAL/2;
-const int SNAKE_NONE = 0;
-const int SNAKE_UP = 1;
-const int SNAKE_DOWN = 2;
-const int SNAKE_LEFT = 3;
-const int SNAKE_RIGHT = 4;
-const int GS_LAUNCHED = 0;
-const int GS_PLAYING = 1;
-const int GS_GAMEOVER = 2;
+const float SNAKE_MOVE_DELAY = 125; // In milliseconds
 const float FLICKER_LOOP_DELAY = 1; // In seconds
 const array<int, 3> COLOR_BACKGROUND_RGB = {0, 0, 0};
 const array<int, 3> COLOR_SNAKE_RGB = {255, 255, 255};
 const array<int, 3> COLOR_APPLE_RGB = {255, 63, 63};
+
+const int SNAKE_DIR_NONE = 0;
+const int SNAKE_DIR_UP = 1;
+const int SNAKE_DIR_DOWN = 2;
+const int SNAKE_DIR_LEFT = 3;
+const int SNAKE_DIR_RIGHT = 4;
+const int GS_LAUNCHED = 0;
+const int GS_PLAYING = 1;
+const int GS_GAMEOVER = 2;
 
 string checkCellContent(int x, int y);
 
@@ -71,6 +68,9 @@ array<bool, SDL_NUM_SCANCODES> keyStatesTap = {false};
 
 // Global game state, defines what part of the game logic should run
 int gameState = GS_LAUNCHED;
+
+// Counts down to zero before allowing the snake to move
+float snakeMoveTimer = SNAKE_MOVE_DELAY;
 
 // Global object flickering timer, affected objects are invisible whenever the
 // timer is on its higher half (i.e. higher than FLICKER_LOOP_DELAY/2)
@@ -113,7 +113,10 @@ class SnakeSegment {
 class {
 	private:
 		// Direction the snake is facing
-		int direction = SNAKE_NONE;
+		int direction = SNAKE_DIR_NONE;
+
+		// Direction the player has pressed for the next frame
+		int bufferedDirection = SNAKE_DIR_NONE;
 
 		// The segments that make up the snake
 		list<SnakeSegment> segments = {
@@ -136,23 +139,29 @@ class {
 		const list<SnakeSegment>&	getSegments() const	 { return this->segments; }
 		const SnakeSegment&			getHead() const		 { return *this->head; }
 
-		void turn(int direction) {
+		bool turn(int direction) {
 			// Disable 180 degree turns
-			if (
-				   this->direction == SNAKE_UP && direction == SNAKE_DOWN
-				|| this->direction == SNAKE_DOWN && direction == SNAKE_UP
-				|| this->direction == SNAKE_LEFT && direction == SNAKE_RIGHT
-				|| this->direction == SNAKE_RIGHT && direction == SNAKE_LEFT
-			) {
-				return;
+			if ((this->direction == SNAKE_DIR_UP && direction == SNAKE_DIR_DOWN)
+			||  (this->direction == SNAKE_DIR_DOWN && direction == SNAKE_DIR_UP)
+			||  (this->direction == SNAKE_DIR_LEFT && direction == SNAKE_DIR_RIGHT)
+			||  (this->direction == SNAKE_DIR_RIGHT && direction == SNAKE_DIR_LEFT)) {
+				return false;
 			}
 
-			this->direction = direction;
+			this->bufferedDirection = direction;
+			return true;
 		}
 
 		// Returns false when bumping into solid things
 		bool move() {
-			if (this->direction == SNAKE_NONE) return true;
+			if (this->direction == SNAKE_DIR_NONE
+			&&  this->bufferedDirection == SNAKE_DIR_NONE) {
+				return true;
+			}
+
+			if (!this->bufferedDirection == SNAKE_DIR_NONE) {
+				this->direction = this->bufferedDirection;
+			}
 
 			// Where to move the head of the snake
 			int targetX = (*this->head).getX();
@@ -160,16 +169,16 @@ class {
 
 			// Adjust for movement direction
 			switch (this->direction) {
-				case SNAKE_UP:
+				case SNAKE_DIR_UP:
 					targetY -= 1;
 					break;
-				case SNAKE_DOWN:
+				case SNAKE_DIR_DOWN:
 					targetY += 1;
 					break;
-				case SNAKE_LEFT:
+				case SNAKE_DIR_LEFT:
 					targetX -= 1;
 					break;
-				case SNAKE_RIGHT:
+				case SNAKE_DIR_RIGHT:
 					targetX += 1;
 					break;
 			}
@@ -197,6 +206,8 @@ class {
 			// Teleport the new head
 			this->head->setX(targetX);
 			this->head->setY(targetY);
+
+			this->bufferedDirection = SNAKE_DIR_NONE;
 
 			return true;
 		}
@@ -245,9 +256,7 @@ int main(int argc, char** argv) {
 	if (!init()) return 1;
 
 	while (true) {
-		deltaTime = static_cast<float>(SDL_GetTicks64() - ticksLast)/1000;
-		if (deltaTime < 1/TARGET_FRAMERATE) continue; // Framerate cap
-	
+		deltaTime = static_cast<float>(SDL_GetTicks64() - ticksLast)/1000;	
 		ticksLast = SDL_GetTicks64();
 
 		if (!doEvents()) break;
@@ -308,14 +317,21 @@ void doGame() {
 			break;
 		case GS_PLAYING:
 		{
-			if		(keyStatesTap[SDL_SCANCODE_UP])		{ snake.turn(SNAKE_UP); }
-			else if	(keyStatesTap[SDL_SCANCODE_DOWN])	{ snake.turn(SNAKE_DOWN); }
-			else if	(keyStatesTap[SDL_SCANCODE_LEFT])	{ snake.turn(SNAKE_LEFT); }
-			else if	(keyStatesTap[SDL_SCANCODE_RIGHT])	{ snake.turn(SNAKE_RIGHT); }
+			if		(keyStatesTap[SDL_SCANCODE_UP])		{ snake.turn(SNAKE_DIR_UP); }
+			else if	(keyStatesTap[SDL_SCANCODE_DOWN])	{ snake.turn(SNAKE_DIR_DOWN); }
+			else if	(keyStatesTap[SDL_SCANCODE_LEFT])	{ snake.turn(SNAKE_DIR_LEFT); }
+			else if	(keyStatesTap[SDL_SCANCODE_RIGHT])	{ snake.turn(SNAKE_DIR_RIGHT); }
 		
-			if (!snake.move()) {
-				gameState = GS_GAMEOVER;
-				break;
+			snakeMoveTimer -= 1000*deltaTime;
+
+			if (snakeMoveTimer < 0) {
+				// Attempt to move the snake
+				if (!snake.move()) {
+					gameState = GS_GAMEOVER;
+					break;
+				}
+
+				snakeMoveTimer += SNAKE_MOVE_DELAY;
 			}
 
 			// Detect if you're eating an apple after moving
