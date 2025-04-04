@@ -2,7 +2,6 @@
 // Move with arrow keys and collect apples
 
 //TODO: collisions
-//TODO: game over
 //TODO: rely on delta time instead of a framerate cap
 
 //TODO-OPT: input buffer
@@ -31,10 +30,10 @@ void doGame();
 void doRender();
 void kill();
 
-const float TARGET_FRAMERATE = 10;
+const float TARGET_FRAMERATE = 8;
 const int CELLS_SIZE = 15;
-const int CELLS_HORIZONTAL = 20;
-const int CELLS_VERTICAL = 20;
+const int CELLS_HORIZONTAL = 17;
+const int CELLS_VERTICAL = 17;
 const int START_X = CELLS_HORIZONTAL/2;
 const int START_Y = CELLS_VERTICAL/2;
 const int SNAKE_NONE = 0;
@@ -150,12 +149,35 @@ class {
 
 			this->direction = direction;
 		}
-		void move() {
-			if (this->direction == SNAKE_NONE) return;
 
-			// Save coordinates of the current head
-			int headX = (*this->head).getX();
-			int headY = (*this->head).getY();
+		// Returns false when bumping into solid things
+		bool move() {
+			if (this->direction == SNAKE_NONE) return true;
+
+			// Where to move the head of the snake
+			int targetX = (*this->head).getX();
+			int targetY = (*this->head).getY();
+
+			// Adjust for movement direction
+			switch (this->direction) {
+				case SNAKE_UP:
+					targetY -= 1;
+					break;
+				case SNAKE_DOWN:
+					targetY += 1;
+					break;
+				case SNAKE_LEFT:
+					targetX -= 1;
+					break;
+				case SNAKE_RIGHT:
+					targetX += 1;
+					break;
+			}
+
+			if (checkCellContent(targetX, targetY) == "snake"
+			||  checkCellContent(targetX, targetY) == "wall") {
+				return false;
+			}
 
 			// Set the head to be the next segment in the list, which will
 			// always be the segment at the tip of the tail
@@ -172,25 +194,11 @@ class {
 			this->lastTailPos.x = this->head->getX();
 			this->lastTailPos.y = this->head->getY();
 
-			// Teleport the new head to the front of the previous one
-			switch (this->direction) {
-				case SNAKE_UP:
-					this->head->setX(headX);
-					this->head->setY(headY - 1);
-					break;
-				case SNAKE_DOWN:
-					this->head->setX(headX);
-					this->head->setY(headY + 1);
-					break;
-				case SNAKE_LEFT:
-					this->head->setX(headX - 1);
-					this->head->setY(headY);
-					break;
-				case SNAKE_RIGHT:
-					this->head->setX(headX + 1);
-					this->head->setY(headY);
-					break;
-			}
+			// Teleport the new head
+			this->head->setX(targetX);
+			this->head->setY(targetY);
+
+			return true;
 		}
 		void grow() {
 			// Determine where to insert the newly grown segment
@@ -299,12 +307,16 @@ void doGame() {
 
 			break;
 		case GS_PLAYING:
+		{
 			if		(keyStatesTap[SDL_SCANCODE_UP])		{ snake.turn(SNAKE_UP); }
 			else if	(keyStatesTap[SDL_SCANCODE_DOWN])	{ snake.turn(SNAKE_DOWN); }
 			else if	(keyStatesTap[SDL_SCANCODE_LEFT])	{ snake.turn(SNAKE_LEFT); }
 			else if	(keyStatesTap[SDL_SCANCODE_RIGHT])	{ snake.turn(SNAKE_RIGHT); }
 		
-			snake.move();
+			if (!snake.move()) {
+				gameState = GS_GAMEOVER;
+				break;
+			}
 
 			// Detect if you're eating an apple after moving
 			auto snakeHead = snake.getHead();
@@ -312,6 +324,8 @@ void doGame() {
 			for (auto& apple : apples) {
 				if (snakeHead.getX() == apple.getX()
 				&&  snakeHead.getY() == apple.getY()) {
+					snake.grow();
+
 					while (true) {
 						// Pick a cell to teleport the apple to
 						int checkX = distGridX(rng);
@@ -324,9 +338,16 @@ void doGame() {
 							break;
 						}
 					}
-
-					snake.grow();
 				}
+			}
+
+			break;
+		}
+		case GS_GAMEOVER:
+			flickerTimer += 1*deltaTime;
+
+			if (flickerTimer > FLICKER_LOOP_DELAY) {
+				flickerTimer -= FLICKER_LOOP_DELAY;
 			}
 
 			break;
@@ -386,7 +407,15 @@ void doRender() {
 
 // Returns what is currently occupying a given cell, or if it's empty
 string checkCellContent(int checkX, int checkY) {
-	// Check for snake segments in the cell
+	// Check if the cell is a wall
+	if (checkX < 0
+	||  checkX > CELLS_HORIZONTAL - 1
+	||  checkY < 0
+	||  checkY > CELLS_VERTICAL - 1) {
+		return "wall";
+	}
+
+	// Check for a snake segment in the cell
 	for (auto& segment : snake.getSegments()) {
 		if (checkX == segment.getX()
 		&&  checkY == segment.getY()) {
@@ -394,7 +423,7 @@ string checkCellContent(int checkX, int checkY) {
 		}
 	}
 
-	// Check for apples in the cell
+	// Check for an apple in the cell
 	for (auto& apple : apples) {
 		if (checkX == apple.getX()
 		&&  checkY == apple.getY()) {
