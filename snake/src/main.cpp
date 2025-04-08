@@ -1,7 +1,12 @@
 // Simple snake game
 // Move with arrow keys and collect apples
 
-//TODO-OPT: score tracking
+//TODO: score tracking
+//TODO: options menu (apple count, speed)
+
+//TODO-OPT: better input buffer
+//TODO-OPT: high score tracking
+//TODO-OPT: silly modes (wrap around, bombs)
 
 #include <SDL2/SDL.h>
 #include <iostream>
@@ -33,9 +38,9 @@ const int START_X = CELLS_HORIZONTAL/2;
 const int START_Y = CELLS_VERTICAL/2;
 const float SNAKE_MOVE_DELAY = 125; // In milliseconds
 const float FLICKER_LOOP_DELAY = 1; // In seconds
-const array<int, 3> COLOR_BACKGROUND_RGB = {0, 0, 0};
-const array<int, 3> COLOR_SNAKE_RGB = {255, 255, 255};
-const array<int, 3> COLOR_APPLE_RGB = {255, 63, 63};
+const SDL_Color COLOR_BACKGROUND_RGB = {31, 31, 31, 255};
+const SDL_Color COLOR_SNAKE_RGB = {255, 255, 255, 255};
+const SDL_Color COLOR_APPLE_RGB = {255, 63, 63, 255};
 
 const int SNAKE_DIR_NONE = 0;
 const int SNAKE_DIR_UP = 1;
@@ -58,7 +63,7 @@ Uint64 ticksLast = 0;
 float deltaTime = 0; // In seconds
 
 // For blitting everything to the screen, respecting the grid
-SDL_Rect rendererRect = {0, 0, CELLS_SIZE, CELLS_SIZE};
+SDL_Rect gameRendererRect = {0, 0, CELLS_SIZE, CELLS_SIZE};
 
 // For saving keyboard inputs
 array<bool, SDL_NUM_SCANCODES> keyStates = {false};
@@ -83,7 +88,7 @@ mt19937 rng(random_device{}());
 uniform_int_distribution<int> distGridX(0, CELLS_HORIZONTAL - 1);
 uniform_int_distribution<int> distGridY(0, CELLS_VERTICAL - 1);
 
-// Represents a piece of the snake (head or body)
+// Represents a piece of the snake (head, body or tail)
 class SnakeSegment {
 	private:
 		int x;
@@ -413,23 +418,23 @@ void doGame() {
 void doRender() {
 	Uint32 backgroundColor = SDL_MapRGB(
 		gameSurface->format,
-		COLOR_BACKGROUND_RGB[0],
-		COLOR_BACKGROUND_RGB[1],
-		COLOR_BACKGROUND_RGB[2]
+		COLOR_BACKGROUND_RGB.r,
+		COLOR_BACKGROUND_RGB.g,
+		COLOR_BACKGROUND_RGB.b
 	);
 
 	Uint32 snakeColor = SDL_MapRGB(
 		gameSurface->format,
-		COLOR_SNAKE_RGB[0],
-		COLOR_SNAKE_RGB[1],
-		COLOR_SNAKE_RGB[2]
+		COLOR_SNAKE_RGB.r,
+		COLOR_SNAKE_RGB.g,
+		COLOR_SNAKE_RGB.b
 	);
 
 	Uint32 appleColor = SDL_MapRGB(
 		gameSurface->format,
-		COLOR_APPLE_RGB[0],
-		COLOR_APPLE_RGB[1],
-		COLOR_APPLE_RGB[2]
+		COLOR_APPLE_RGB.r,
+		COLOR_APPLE_RGB.g,
+		COLOR_APPLE_RGB.b
 	);
 
 	// Clear screen before drawing
@@ -437,19 +442,19 @@ void doRender() {
 
 	// Draw apple(s)
 	for (auto& apple : apples) {
-		rendererRect.x = apple.getX()*CELLS_SIZE;
-		rendererRect.y = apple.getY()*CELLS_SIZE;
+		gameRendererRect.x = apple.getX()*CELLS_SIZE;
+		gameRendererRect.y = apple.getY()*CELLS_SIZE;
 		
-		SDL_FillRect(gameSurface, &rendererRect, appleColor);
+		SDL_FillRect(gameSurface, &gameRendererRect, appleColor);
 	}
 
 	// Draw snake parts whenever the flicker timer isn't supposed to hide them
 	if (flickerTimer <= FLICKER_LOOP_DELAY/2) {
 		for (auto& segment : snake.getSegments()) {
-			rendererRect.x = segment.getX()*CELLS_SIZE;
-			rendererRect.y = segment.getY()*CELLS_SIZE;
+			gameRendererRect.x = segment.getX()*CELLS_SIZE;
+			gameRendererRect.y = segment.getY()*CELLS_SIZE;
 
-			SDL_FillRect(gameSurface, &rendererRect, snakeColor);
+			SDL_FillRect(gameSurface, &gameRendererRect, snakeColor);
 		}
 	}
 
