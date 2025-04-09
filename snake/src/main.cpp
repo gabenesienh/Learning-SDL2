@@ -4,7 +4,6 @@
 //TODO: score tracking
 //TODO: options menu (apple count, speed)
 
-//TODO-OPT: better input buffer
 //TODO-OPT: high score tracking
 //TODO-OPT: silly modes (wrap around, bombs)
 
@@ -32,11 +31,11 @@ void doRender();
 void kill();
 
 const int CELLS_SIZE = 15;
-const int CELLS_HORIZONTAL = 17;
-const int CELLS_VERTICAL = 17;
+const int CELLS_HORIZONTAL = 16;
+const int CELLS_VERTICAL = 16;
 const int START_X = CELLS_HORIZONTAL/2;
 const int START_Y = CELLS_VERTICAL/2;
-const float SNAKE_MOVE_DELAY = 125; // In milliseconds
+const float SNAKE_MOVE_DELAY = 150; // In milliseconds
 const float FLICKER_LOOP_DELAY = 1; // In seconds
 const SDL_Color COLOR_BACKGROUND_RGB = {31, 31, 31, 255};
 const SDL_Color COLOR_SNAKE_RGB = {255, 255, 255, 255};
@@ -120,8 +119,9 @@ class {
 		// Direction the snake is facing
 		int direction = SNAKE_DIR_NONE;
 
-		// Direction the player has pressed for the next frame
-		int bufferedDirection = SNAKE_DIR_NONE;
+		// Stores buffered inputs for turning the snake
+		// Inputs are registered in FIFO order
+		array<int, 2> bufferedDirection = {SNAKE_DIR_NONE};
 
 		// The segments that make up the snake
 		list<SnakeSegment> segments = {
@@ -144,28 +144,55 @@ class {
 		const list<SnakeSegment>&	getSegments() const	 { return this->segments; }
 		const SnakeSegment&			getHead() const		 { return *this->head; }
 
+		// Doesn't immediately turn the snake, but rather buffers a turn
+		// Returns false if it's a repeat input (e.g. pressing right when
+		// you're already going right)
 		bool turn(int direction) {
-			// Disable 180 degree turns
-			if ((this->direction == SNAKE_DIR_UP && direction == SNAKE_DIR_DOWN)
-			||  (this->direction == SNAKE_DIR_DOWN && direction == SNAKE_DIR_UP)
-			||  (this->direction == SNAKE_DIR_LEFT && direction == SNAKE_DIR_RIGHT)
-			||  (this->direction == SNAKE_DIR_RIGHT && direction == SNAKE_DIR_LEFT)) {
-				return false;
+			if (this->bufferedDirection[0] == SNAKE_DIR_NONE) {
+				if (this->direction == direction) {
+					return false;
+				}
+
+				this->bufferedDirection[0] = direction;
+			} else {
+				if (this->bufferedDirection[0] == direction) {
+					return false;
+				}
+
+				this->bufferedDirection[1] = direction;
 			}
 
-			this->bufferedDirection = direction;
 			return true;
 		}
 		// Returns false when bumping into solid things
 		bool move() {
+			// Move the second buffered input to the front, if the first one is
+			// empty
+			if (this->bufferedDirection[0] == SNAKE_DIR_NONE) {
+				this->bufferedDirection[0] = this->bufferedDirection[1];
+				this->bufferedDirection[1] = SNAKE_DIR_NONE;
+			}
+
+			// Stay still if you have no direction
 			if (this->direction == SNAKE_DIR_NONE
-			&&  this->bufferedDirection == SNAKE_DIR_NONE) {
+			&&  this->bufferedDirection[0] == SNAKE_DIR_NONE) {
 				return true;
 			}
 
-			if (!this->bufferedDirection == SNAKE_DIR_NONE) {
-				this->direction = this->bufferedDirection;
+			// Prevent illegal 180 degree turning
+			if ((this->bufferedDirection[0] != SNAKE_DIR_NONE)
+			&&  !((this->direction == SNAKE_DIR_UP && this->bufferedDirection[0] == SNAKE_DIR_DOWN)
+			||    (this->direction == SNAKE_DIR_DOWN && this->bufferedDirection[0] == SNAKE_DIR_UP)
+			||    (this->direction == SNAKE_DIR_LEFT && this->bufferedDirection[0] == SNAKE_DIR_RIGHT)
+			||    (this->direction == SNAKE_DIR_RIGHT && this->bufferedDirection[0] == SNAKE_DIR_LEFT))) {
+				// Set direction to the first buffered input in line
+				this->direction = this->bufferedDirection[0];
 			}
+
+			// Move the second buffered input to the front for use in the next
+			// movement
+			this->bufferedDirection[0] = this->bufferedDirection[1];
+			this->bufferedDirection[1] = SNAKE_DIR_NONE;
 
 			// Where to move the head of the snake
 			int targetX = (*this->head).getX();
@@ -207,9 +234,6 @@ class {
 			// Set the head to be the next segment in the list, which will
 			// always be the segment at the tip of the tail
 			this->head++;
-
-			// Loop around and pick the first element if it's trying to choose
-			// an element beyond the end boundary
 			if (this->head == this->segments.end()) {
 				this->head = this->segments.begin();
 			}
@@ -223,8 +247,6 @@ class {
 			this->head->setX(targetX);
 			this->head->setY(targetY);
 
-			this->bufferedDirection = SNAKE_DIR_NONE;
-
 			return true;
 		}
 		void grow() {
@@ -232,9 +254,6 @@ class {
 			// Should always be on the tail, that is, the element right after
 			// the head on the segment list
 			auto insertIndex = next(this->head, 1);
-
-			// Loop around and pick the first element if it's trying to choose
-			// an element beyond the end boundary
 			if (insertIndex == this->segments.end()) {
 				insertIndex = this->segments.begin();
 			}
@@ -248,7 +267,7 @@ class {
 		// Return the snake to its starting state
 		void reset() {
 			this->direction = SNAKE_DIR_NONE;
-			this->bufferedDirection = SNAKE_DIR_NONE;
+			this->bufferedDirection = {SNAKE_DIR_NONE};
 			this->segments.erase(
 				next(this->segments.begin(), 4),
 				this->segments.end()
