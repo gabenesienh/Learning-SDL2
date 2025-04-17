@@ -14,7 +14,7 @@
 #include <SDL2/SDL.h>
 #include <iostream>
 #include <array>
-#include "linealg.h"
+#include "linealg.hpp"
 
 using std::cin, std::cout, std::endl;
 using std::array;

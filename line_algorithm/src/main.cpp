@@ -2,7 +2,7 @@
 
 #include <SDL2/SDL.h>
 #include <iostream>
-#include "linealg.h"
+#include "linealg.hpp"
 
 using std::cin, std::cout;
 

@@ -3,9 +3,12 @@
 
 //TODO: score tracking
 //TODO: options menu (apple count, speed)
+//TODO: break program into multiple files
 
 //TODO-OPT: high score tracking
 //TODO-OPT: silly modes (wrap around, bombs)
+//TODO-OPT: optimize cell checks by keeping track of empty spaces
+//TODO-OPT: deglobalize variables
 
 #include <SDL2/SDL.h>
 #include <iostream>
@@ -15,6 +18,8 @@
 #include <list>
 #include <random>
 #include <iterator>
+
+#include "snake.hpp"
 
 using std::cin, std::cout, std::endl;
 using std::string;
@@ -41,16 +46,16 @@ const SDL_Color COLOR_BACKGROUND_RGB = {31, 31, 31, 255};
 const SDL_Color COLOR_SNAKE_RGB = {255, 255, 255, 255};
 const SDL_Color COLOR_APPLE_RGB = {255, 63, 63, 255};
 
-const int SNAKE_DIR_NONE = 0;
-const int SNAKE_DIR_UP = 1;
-const int SNAKE_DIR_DOWN = 2;
-const int SNAKE_DIR_LEFT = 3;
-const int SNAKE_DIR_RIGHT = 4;
+extern const int SNAKE_DIR_NONE;
+extern const int SNAKE_DIR_UP;
+extern const int SNAKE_DIR_DOWN;
+extern const int SNAKE_DIR_LEFT;
+extern const int SNAKE_DIR_RIGHT;
 const int GS_LAUNCHED = 0;
 const int GS_PLAYING = 1;
 const int GS_GAMEOVER = 2;
 
-string checkCellContent(int x, int y);
+string checkCellContent(int checkX, int checkY);
 
 SDL_Window* window;
 SDL_Surface* winSurface;
@@ -87,200 +92,6 @@ mt19937 rng(random_device{}());
 uniform_int_distribution<int> distGridX(0, CELLS_HORIZONTAL - 1);
 uniform_int_distribution<int> distGridY(0, CELLS_VERTICAL - 1);
 
-// Represents a piece of the snake (head, body or tail)
-class SnakeSegment {
-	private:
-		int x;
-		int y;
-	public:
-		SnakeSegment(int x, int y) {
-			this->x = x;
-			this->y = y;
-		}
-
-		int getX() const {
-			return this->x;
-		}
-		int getY() const {
-			return this->y;
-		}
-
-		void setX(int x) {
-			this->x = x;
-		}
-		void setY(int y) {
-			this->y = y;
-		}
-};
-
-// The snake the player controls
-class {
-	private:
-		// Direction the snake is facing
-		int direction = SNAKE_DIR_NONE;
-
-		// Stores buffered inputs for turning the snake
-		// Inputs are registered in FIFO order
-		array<int, 2> bufferedDirection = {SNAKE_DIR_NONE};
-
-		// The segments that make up the snake
-		list<SnakeSegment> segments = {
-			SnakeSegment(START_X, START_Y),
-			SnakeSegment(START_X, START_Y),
-			SnakeSegment(START_X, START_Y),
-			SnakeSegment(START_X, START_Y)
-		};
-
-		// The segment currently at the head of the snake
-		list<SnakeSegment>::iterator head = this->segments.begin();
-
-		// Stores the position of the tail segment from the previous movement
-		struct {
-			int x;
-			int y;
-		} lastTailPos;
-	public:
-		int							getDirection() const { return this->direction; }
-		const list<SnakeSegment>&	getSegments() const	 { return this->segments; }
-		const SnakeSegment&			getHead() const		 { return *this->head; }
-
-		// Doesn't immediately turn the snake, but rather buffers a turn
-		// Returns false if it's a repeat input (e.g. pressing right when
-		// you're already going right)
-		bool turn(int direction) {
-			if (this->bufferedDirection[0] == SNAKE_DIR_NONE) {
-				if (this->direction == direction) {
-					return false;
-				}
-
-				this->bufferedDirection[0] = direction;
-			} else {
-				if (this->bufferedDirection[0] == direction) {
-					return false;
-				}
-
-				this->bufferedDirection[1] = direction;
-			}
-
-			return true;
-		}
-		// Returns false when bumping into solid things
-		bool move() {
-			// Move the second buffered input to the front, if the first one is
-			// empty
-			if (this->bufferedDirection[0] == SNAKE_DIR_NONE) {
-				this->bufferedDirection[0] = this->bufferedDirection[1];
-				this->bufferedDirection[1] = SNAKE_DIR_NONE;
-			}
-
-			// Stay still if you have no direction
-			if (this->direction == SNAKE_DIR_NONE
-			&&  this->bufferedDirection[0] == SNAKE_DIR_NONE) {
-				return true;
-			}
-
-			// Prevent illegal 180 degree turning
-			if ((this->bufferedDirection[0] != SNAKE_DIR_NONE)
-			&&  !((this->direction == SNAKE_DIR_UP && this->bufferedDirection[0] == SNAKE_DIR_DOWN)
-			||    (this->direction == SNAKE_DIR_DOWN && this->bufferedDirection[0] == SNAKE_DIR_UP)
-			||    (this->direction == SNAKE_DIR_LEFT && this->bufferedDirection[0] == SNAKE_DIR_RIGHT)
-			||    (this->direction == SNAKE_DIR_RIGHT && this->bufferedDirection[0] == SNAKE_DIR_LEFT))) {
-				// Set direction to the first buffered input in line
-				this->direction = this->bufferedDirection[0];
-			}
-
-			// Move the second buffered input to the front for use in the next
-			// movement
-			this->bufferedDirection[0] = this->bufferedDirection[1];
-			this->bufferedDirection[1] = SNAKE_DIR_NONE;
-
-			// Where to move the head of the snake
-			int targetX = (*this->head).getX();
-			int targetY = (*this->head).getY();
-
-			// Adjust for movement direction
-			switch (this->direction) {
-				case SNAKE_DIR_UP:
-					targetY -= 1;
-					break;
-				case SNAKE_DIR_DOWN:
-					targetY += 1;
-					break;
-				case SNAKE_DIR_LEFT:
-					targetX -= 1;
-					break;
-				case SNAKE_DIR_RIGHT:
-					targetX += 1;
-					break;
-			}
-
-			if (checkCellContent(targetX, targetY) == "wall") {
-				return false;
-			} else if (checkCellContent(targetX, targetY) == "snake") {
-				auto tail = next(this->head, 1);
-
-				if (tail == this->segments.end()) {
-					tail = this->segments.begin();
-				}
-
-				// If blocked by a body piece, only stop if it's not the tail
-				// The tail would move out of the way next frame anyway, so
-				// this gives the player some more wiggle room
-				if (targetX != tail->getX() || targetY != tail->getY()) {
-					return false;
-				}
-			}
-
-			// Set the head to be the next segment in the list, which will
-			// always be the segment at the tip of the tail
-			this->head++;
-			if (this->head == this->segments.end()) {
-				this->head = this->segments.begin();
-			}
-
-			// Save the new head segment's position (still positioned at the
-			// tail)
-			this->lastTailPos.x = this->head->getX();
-			this->lastTailPos.y = this->head->getY();
-
-			// Teleport the new head
-			this->head->setX(targetX);
-			this->head->setY(targetY);
-
-			return true;
-		}
-		void grow() {
-			// Determine where to insert the newly grown segment
-			// Should always be on the tail, that is, the element right after
-			// the head on the segment list
-			auto insertIndex = next(this->head, 1);
-			if (insertIndex == this->segments.end()) {
-				insertIndex = this->segments.begin();
-			}
-
-			// Spawn the new segment
-			this->segments.insert(
-				insertIndex,
-				SnakeSegment(this->lastTailPos.x, this->lastTailPos.y)
-			);
-		}
-		// Return the snake to its starting state
-		void reset() {
-			this->direction = SNAKE_DIR_NONE;
-			this->bufferedDirection = {SNAKE_DIR_NONE};
-			this->segments.erase(
-				next(this->segments.begin(), 4),
-				this->segments.end()
-			);
-			this->head = this->segments.begin();
-
-			for (auto& segment : this->segments) {
-				segment.setX(START_X);
-				segment.setY(START_Y);
-			}
-		}
-} snake;
-
 // Apples that increase your length when eaten
 class Apple {
 	private:
@@ -298,6 +109,9 @@ class Apple {
 		void setX(int x) { this->x = x; }
 		void setY(int y) { this->y = y; }
 };
+
+// The snake the player controls
+Snake snake = Snake();
 
 // For storing all apples currently in game
 vector<Apple> apples = {};
