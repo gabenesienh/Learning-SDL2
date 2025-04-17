@@ -3,7 +3,7 @@
 
 // TODO: implement bresenham's algorithm
 
-#include "linealg.hpp"
+#include "linealg.h"
 
 #include <SDL2/SDL.h>
 #include <cmath>
