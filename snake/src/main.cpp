@@ -20,6 +20,8 @@
 #include <iterator>
 
 #include "snake.hpp"
+#include "events.hpp"
+#include "objects.hpp"
 
 using std::cin, std::cout, std::endl;
 using std::string;
@@ -30,7 +32,6 @@ using std::random_device, std::mt19937, std::uniform_int_distribution;
 using std::next;
 
 bool init();
-bool doEvents();
 void doGame();
 void doRender();
 void kill();
@@ -46,11 +47,6 @@ const SDL_Color COLOR_BACKGROUND_RGB = {31, 31, 31, 255};
 const SDL_Color COLOR_SNAKE_RGB = {255, 255, 255, 255};
 const SDL_Color COLOR_APPLE_RGB = {255, 63, 63, 255};
 
-extern const int SNAKE_DIR_NONE;
-extern const int SNAKE_DIR_UP;
-extern const int SNAKE_DIR_DOWN;
-extern const int SNAKE_DIR_LEFT;
-extern const int SNAKE_DIR_RIGHT;
 const int GS_LAUNCHED = 0;
 const int GS_PLAYING = 1;
 const int GS_GAMEOVER = 2;
@@ -61,19 +57,11 @@ SDL_Window* window;
 SDL_Surface* winSurface;
 SDL_Surface* gameSurface;
 
-SDL_Event event;
-
 Uint64 ticksLast = 0;
 float deltaTime = 0; // In seconds
 
 // For blitting everything to the screen, respecting the grid
 SDL_Rect gameRendererRect = {0, 0, CELLS_SIZE, CELLS_SIZE};
-
-// For saving keyboard inputs
-array<bool, SDL_NUM_SCANCODES> keyStates = {false};
-
-// For saving keyboard inputs for one frame
-array<bool, SDL_NUM_SCANCODES> keyStatesTap = {false};
 
 // Global game state, defines what part of the game logic should run
 int gameState = GS_LAUNCHED;
@@ -91,24 +79,6 @@ mt19937 rng(random_device{}());
 // For generating random coordinates within the grid
 uniform_int_distribution<int> distGridX(0, CELLS_HORIZONTAL - 1);
 uniform_int_distribution<int> distGridY(0, CELLS_VERTICAL - 1);
-
-// Apples that increase your length when eaten
-class Apple {
-	private:
-		int x;
-		int y;
-	public:
-		Apple(int x, int y) {
-			this->x = x;
-			this->y = y;
-		}
-
-		int getX() const { return this->x; }
-		int getY() const { return this->y; }
-
-		void setX(int x) { this->x = x; }
-		void setY(int y) { this->y = y; }
-};
 
 // The snake the player controls
 Snake snake = Snake();
@@ -130,33 +100,6 @@ int main(int argc, char** argv) {
 
 	kill();
 	return 0;
-}
-
-// Event loop
-bool doEvents() {
-	while (SDL_PollEvent(&event) != 0) {
-		switch (event.type) {
-			case SDL_QUIT:
-				return false;
-			case SDL_KEYDOWN:
-				switch (event.key.keysym.scancode) {
-					// Quit by pressing Escape
-					case SDL_SCANCODE_ESCAPE:
-						return false;
-				}
-
-				if (!keyStates[event.key.keysym.scancode]) {
-					keyStates[event.key.keysym.scancode] = true;
-					keyStatesTap[event.key.keysym.scancode] = true;
-				}
-				break;
-			case SDL_KEYUP:
-				keyStates[event.key.keysym.scancode] = false;
-				break;
-		}
-	}
-
-	return true;
 }
 
 // Game logic

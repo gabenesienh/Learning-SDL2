@@ -1,5 +1,5 @@
-#ifndef SNAKE_H
-#define SNAKE_H
+#ifndef SNAKE_HPP
+#define SNAKE_HPP
 
 #include <array>
 #include <list>
@@ -9,6 +9,7 @@ using std::list;
 
 extern const int START_X;
 extern const int START_Y;
+
 const int SNAKE_DIR_NONE = 0;
 const int SNAKE_DIR_UP = 1;
 const int SNAKE_DIR_DOWN = 2;
