@@ -22,6 +22,7 @@
 #include "snake.hpp"
 #include "events.hpp"
 #include "objects.hpp"
+#include "util.hpp"
 
 using std::cin, std::cout, std::endl;
 using std::string;
@@ -31,14 +32,9 @@ using std::list;
 using std::random_device, std::mt19937, std::uniform_int_distribution;
 using std::next;
 
-bool init();
 void doGame();
 void doRender();
-void kill();
 
-const int CELLS_SIZE = 15;
-const int CELLS_HORIZONTAL = 16;
-const int CELLS_VERTICAL = 16;
 const int START_X = CELLS_HORIZONTAL/2;
 const int START_Y = CELLS_VERTICAL/2;
 const float SNAKE_MOVE_DELAY = 150; // In milliseconds
@@ -52,10 +48,6 @@ const int GS_PLAYING = 1;
 const int GS_GAMEOVER = 2;
 
 string checkCellContent(int checkX, int checkY);
-
-SDL_Window* window;
-SDL_Surface* winSurface;
-SDL_Surface* gameSurface;
 
 Uint64 ticksLast = 0;
 float deltaTime = 0; // In seconds
@@ -265,64 +257,4 @@ string checkCellContent(int checkX, int checkY) {
 	}
 
 	return "empty";
-}
-
-// Initialize SDL
-bool init() {
-	if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
-		cout << "Error initializing SDL: " << SDL_GetError() << endl;
-		system("pause");
-		return false;
-	}
-
-	window = SDL_CreateWindow(
-		"Snake",
-		SDL_WINDOWPOS_UNDEFINED,
-		SDL_WINDOWPOS_UNDEFINED,
-		CELLS_HORIZONTAL*CELLS_SIZE,
-		CELLS_VERTICAL*CELLS_SIZE,
-		0
-	);
-	if (!window) {
-		cout << "Error creating window: " << SDL_GetError() << endl;
-		system("pause");
-		return false;
-	}
-
-	winSurface = SDL_GetWindowSurface(window);
-	if (!winSurface) {
-		cout << "Error getting surface: " << SDL_GetError() << endl;
-		system("pause");
-		return false;
-	}
-
-	// Temporary surface, will be formatted into the game surface
-	SDL_Surface* temp = SDL_CreateRGBSurfaceWithFormat(
-		winSurface->flags,
-		CELLS_HORIZONTAL*CELLS_SIZE,
-		CELLS_HORIZONTAL*CELLS_SIZE,
-		winSurface->format->BitsPerPixel,
-		winSurface->format->format
-	);
-	if (!temp) {
-		cout << "Error creating game surface: " << SDL_GetError() << endl;
-		system("pause");
-		return false;
-	}
-
-	// Convert game surface to window surface for faster blitting
-	gameSurface = SDL_ConvertSurface(temp, winSurface->format, 0);
-	if (!gameSurface) {
-		cout << "Error formatting game surface: " << SDL_GetError() << endl;
-		system("pause");
-		return false;
-	}
-
-	return true;
-}
-
-// Quit SDL2
-void kill() {
-	SDL_DestroyWindow(window);
-	SDL_Quit();
 }

@@ -9,12 +9,6 @@ using std::string;
 using std::list;
 using std::next;
 
-extern const int SNAKE_DIR_NONE;
-extern const int SNAKE_DIR_UP;
-extern const int SNAKE_DIR_DOWN;
-extern const int SNAKE_DIR_LEFT;
-extern const int SNAKE_DIR_RIGHT;
-
 extern string checkCellContent(int checkX, int checkY);
 
 // ------------------
