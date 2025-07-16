@@ -1,5 +1,4 @@
 // Basic game template
-// Uses software rendering
 
 #include <SDL2/SDL.h>
 

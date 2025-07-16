@@ -1,3 +1,5 @@
+// SDL boilerplate and misc utilities
+
 #ifndef UTIL_HPP
 #define UTIL_HPP
 

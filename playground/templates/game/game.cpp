@@ -1,13 +1,8 @@
 #include "game.hpp"
 
-#include <vector>
-
 #include "objects.hpp"
 
-using std::vector;
-
 int gameState = GS_LAUNCHED;
-vector<GameObject> gameObjects = {};
 
 void doGame() {
 	switch (gameState) {

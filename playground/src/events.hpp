@@ -1,3 +1,5 @@
+// Input events (e.g. keyboard presses, mouse movement, window closing)
+
 #ifndef EVENTS_HPP
 #define EVENTS_HPP
 
