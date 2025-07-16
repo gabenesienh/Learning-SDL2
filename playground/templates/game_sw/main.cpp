@@ -1,6 +1,5 @@
-// A program with no specific purpose that exists for me to test random things
-// Whenever I start developing a proper idea, it gets moved to its own folder and main.cpp file
-// This file here will likely receive constant updates as I try new things
+// Basic game template
+// Uses software rendering
 
 #include <SDL2/SDL.h>
 
