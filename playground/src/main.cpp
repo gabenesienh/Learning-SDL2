@@ -17,6 +17,8 @@ float deltaTime = 0; // In seconds
 int main(int argc, char** argv) {
 	if (!init()) return 1;
 
+	debugMode = true;
+
 	while (true) {
 		deltaTime = static_cast<float>(SDL_GetTicks64() - ticksLast)/1000;
 

@@ -6,24 +6,37 @@
 // Abstract class for specialized objects to implement
 class GameObject {
 	protected:
-		int x = 0;
-		int y = 0;
+		double x = 0;
+		double y = 0;
 		int width = 16;
 		int height = 16;
 	public:
-		int getX() const;
-		int getY() const;
+		double getX() const;
+		double getY() const;
 		int getWidth() const;
 		int getHeight() const;
+
+		void setWidth(int width);
+		void setHeight(int height);
+
+		void teleport(double x, double y);
 
 		virtual ~GameObject() = 0;
 };
 
+// Directions to send as parameters for some player methods
+const int DIR_LEFT = 0;
+const int DIR_RIGHT = 1;
+
 // The player character
 class Player : public GameObject {
+	private:
+		double moveSpeed = 2.5;
 	public:
 		Player();
-		Player(int x, int y);
+		Player(double x, double y);
+
+		bool walk(int direction);
 };
 
 #endif

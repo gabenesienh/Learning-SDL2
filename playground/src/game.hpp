@@ -13,6 +13,9 @@ using std::deque;
 const int GS_LAUNCHED = 0;
 const int GS_STARTED = 1;
 
+// Enables debug features (e.g. hitboxes)
+extern bool debugMode;
+
 // The current game state
 extern int gameState;
 
