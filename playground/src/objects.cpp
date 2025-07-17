@@ -4,6 +4,8 @@
 
 int GameObject::getX() const { return this->x; }
 int GameObject::getY() const { return this->y; }
+int GameObject::getWidth() const { return this->width; }
+int GameObject::getHeight() const { return this->height; }
 
 GameObject::~GameObject() {};
 

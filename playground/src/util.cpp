@@ -3,6 +3,8 @@
 #include <SDL2/SDL.h>
 #include <iostream>
 
+#include "game.hpp"
+
 using std::cin, std::cout, std::endl;
 
 SDL_Window* window;
@@ -63,6 +65,10 @@ bool init() {
 }
 
 void kill() {
+	for (auto gobj : gameObjects) {
+		delete gobj;
+	}
+
 	SDL_DestroyWindow(window);
 	SDL_Quit();
 }

@@ -13,6 +13,8 @@ class GameObject {
 	public:
 		int getX() const;
 		int getY() const;
+		int getWidth() const;
+		int getHeight() const;
 
 		virtual ~GameObject() = 0;
 };
