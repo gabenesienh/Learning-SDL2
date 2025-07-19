@@ -64,7 +64,7 @@ void doGame() {
 				cout <<  "x=" << player->getX()
 				     << " y=" << player->getY()
 				     << " dir=" << player->getDirection()
-				     << '\n';
+				     << std::showpoint << '\n';
 			}
 
 			break;
