@@ -61,7 +61,7 @@ class GameObject {
 		void setSpeedX(double speedX);
 		void setSpeedY(double speedY);
 		void setState(string state);
-		bool setDirection(const vec2& direction);
+		bool setDirection(vec2 direction);
 
 		// Move object regardless of collision rules
 		void teleport(double x, double y);

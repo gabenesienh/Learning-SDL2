@@ -17,12 +17,11 @@ struct vec2 {
 	double x;
 	double y;
 
-	bool operator==(const vec2& other) const {
-		return (this->x == other.x && this->y == other.y);
-	}
-	bool operator!=(const vec2& other) const {
-		return !this->operator==(other);
-	}
+	bool operator==(const vec2& other) const;
+	bool operator!=(const vec2& other) const;
+
+	// Make into a unit vector
+	void normalize();
 };
 
 // Initialize SDL

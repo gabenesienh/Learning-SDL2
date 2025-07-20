@@ -30,10 +30,9 @@ void GameObject::setHeight(int height)       { this->height = height; }
 void GameObject::setSpeedX(double speedX)    { this->speedX = speedX; }
 void GameObject::setSpeedY(double speedY)    { this->speedY = speedY; }
 void GameObject::setState(string state)      { this->state = state; }
-bool GameObject::setDirection(const vec2& direction) {
-	// Prevent directions that aren't valid (enough) unit vectors
-	if (abs(direction.x) > 1) return false;
-	if (abs(direction.y) > 1) return false;
+bool GameObject::setDirection(vec2 direction) {
+	// Normalize desired direction into unit vector
+	direction.normalize();
 
 	// Ensure that the desired direction matches the object's direction type
 	switch (this->directionType) {

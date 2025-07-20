@@ -2,14 +2,31 @@
 
 #include <SDL2/SDL.h>
 #include <iostream>
+#include <cmath>
 
 #include "game.hpp"
 
 using std::cin, std::cout, std::endl;
+using std::pow, std::sqrt;
 
 SDL_Window* window;
 SDL_Surface* winSurface;
 SDL_Surface* gameSurface;
+
+bool vec2::operator==(const vec2& other) const {
+	return (this->x == other.x && this->y == other.y);
+}
+bool vec2::operator!=(const vec2& other) const {
+	return !this->operator==(other);
+}
+
+void vec2::normalize() {
+	// Get vector magnitude (pythagorean theorem)
+	double mag = sqrt(pow(this->x, 2) + pow(this->y, 2));
+
+	this->x /= mag;
+	this->y /= mag;
+}
 
 bool init() {
 	if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
