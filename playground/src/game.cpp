@@ -37,10 +37,12 @@ void doGame() {
 			if (keyStates[SDL_SCANCODE_LEFT]
 			&& !keyStates[SDL_SCANCODE_RIGHT]) {
 				player->setDirection(DIR_LEFT);
+				player->setState("walk");
 				player->walk();
 			} else if (keyStates[SDL_SCANCODE_RIGHT]
 			       && !keyStates[SDL_SCANCODE_LEFT]) {
 				player->setDirection(DIR_RIGHT);
+				player->setState("walk");
 				player->walk();
 			} else if (player->getState() == "walk") {
 				player->setSpeedX(0);
@@ -63,7 +65,8 @@ void doGame() {
 			if (debugMode) {
 				cout <<  "x=" << player->getX()
 				     << " y=" << player->getY()
-				     << " dir=" << player->getDirection()
+				     << " dirx=" << player->getDirection().x
+				     << " diry=" << player->getDirection().y
 				     << std::showpoint << '\n';
 			}
 

@@ -56,28 +56,13 @@ void doRender() {
 			rendererRect.w = 1;
 			rendererRect.h = 1;
 
+			// The starting point of the line (object's center)
 			int centerX = gobj->getX() - rendererRect.w/2;
 			int centerY = gobj->getY() - gobj->getHeight()/2 - rendererRect.h/2;
 
-			// The endpoint of the line that will be drawn
-			int targetX;
-			int targetY;
-
-			// Adjust endpoint based on object direction
-			switch (gobj->getDirection()) {
-				case DIR_LEFT:
-					targetX = centerX - 25;
-					targetY = centerY;
-					break;
-				case DIR_RIGHT:
-					targetX = centerX + 25;
-					targetY = centerY;
-					break;
-				default:
-					targetX = centerX;
-					targetY = centerY;
-					break;
-			}
+			// The ending point of the line that will be drawn
+			int targetX = centerX + (gobj->getDirection().x * 25);
+			int targetY = centerY + (gobj->getDirection().y * 25);
 
 			drawLine(
 				gameSurface, rendererRect, debugDirectionColor,
