@@ -6,11 +6,16 @@
 #include <SDL2/SDL.h>
 #include <array>
 
+#include "util.hpp"
+
 using std::array;
 
 // The current state of all keyboard keys
 // true means pressed, false means not pressed
 extern array<bool, SDL_NUM_SCANCODES> keyStates;
+
+// The current X and Y position of the mouse cursor
+extern vec2 mousePos;
 
 // Event loop
 // Returns false when the window should close

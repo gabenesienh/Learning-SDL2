@@ -3,6 +3,7 @@
 #include <SDL2/SDL.h>
 #include <cmath>
 
+#include "events.hpp"
 #include "game.hpp"
 #include "util.hpp"
 
@@ -23,6 +24,7 @@ Uint32 blackColor;
 Uint32 debugHitboxColor;
 Uint32 debugAnchorColor;
 Uint32 debugDirectionColor;
+Uint32 debugPlayerAimColor;
 
 void doRender() {
 	if (!isColorsSet) setColors();
@@ -41,17 +43,7 @@ void doRender() {
 			rendererRect.y = gobj->getY() - rendererRect.h;
 			SDL_FillRect(gameSurface, &rendererRect, debugHitboxColor);
 
-			/* -- Draw object's anchor point -- */
-
-			rendererRect.w = 4;
-			rendererRect.h = 4;
-			rendererRect.x = gobj->getX() - rendererRect.w/2;
-			rendererRect.y = gobj->getY() - rendererRect.h/2;
-			SDL_FillRect(gameSurface, &rendererRect, debugAnchorColor);
-
-			/* --
-			Draw line from object's center to the direction they're facing
-			-- */
+			/* -- Draw line from object's center to their direction -- */
 
 			rendererRect.w = 1;
 			rendererRect.h = 1;
@@ -60,7 +52,7 @@ void doRender() {
 			int centerX = gobj->getX() - rendererRect.w/2;
 			int centerY = gobj->getY() - gobj->getHeight()/2 - rendererRect.h/2;
 
-			// The ending point of the line that will be drawn
+			// The ending point of the line
 			int targetX = centerX + (gobj->getDirection().x * 25);
 			int targetY = centerY + (gobj->getDirection().y * 25);
 
@@ -69,6 +61,22 @@ void doRender() {
 				centerX, centerY,
 				targetX, targetY
 			);
+
+			/* -- Draw line from player object(s) to cursor -- */
+			
+			drawLine(
+				gameSurface, rendererRect, debugPlayerAimColor,
+				centerX, centerY,
+				mousePos.x, mousePos.y
+			);
+
+			/* -- Draw object's anchor point -- */
+
+			rendererRect.w = 4;
+			rendererRect.h = 4;
+			rendererRect.x = gobj->getX() - rendererRect.w/2;
+			rendererRect.y = gobj->getY() - rendererRect.h/2;
+			SDL_FillRect(gameSurface, &rendererRect, debugAnchorColor);
 		}
 	}
 
@@ -127,6 +135,13 @@ void setColors() {
 		gameSurface->format,
 		255,
 		127,
+		31
+	);
+
+	debugPlayerAimColor = SDL_MapRGB(
+		gameSurface->format,
+		31,
+		255,
 		31
 	);
 

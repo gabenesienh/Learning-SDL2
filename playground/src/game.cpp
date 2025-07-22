@@ -6,6 +6,7 @@
 
 #include "events.hpp"
 #include "objects.hpp"
+#include "preferences.hpp"
 #include "util.hpp"
 
 using std::cin, std::cout, std::endl;
@@ -34,13 +35,13 @@ void doGame() {
 			/* -- Player input handling -- */
 
 			// Walking
-			if (keyStates[SDL_SCANCODE_LEFT]
-			&& !keyStates[SDL_SCANCODE_RIGHT]) {
+			if (keyStates[BT_LEFT]
+			&& !keyStates[BT_RIGHT]) {
 				player->setDirection(DIR_LEFT);
 				player->setState("walk");
 				player->walk();
-			} else if (keyStates[SDL_SCANCODE_RIGHT]
-			       && !keyStates[SDL_SCANCODE_LEFT]) {
+			} else if (keyStates[BT_RIGHT]
+			       && !keyStates[BT_LEFT]) {
 				player->setDirection(DIR_RIGHT);
 				player->setState("walk");
 				player->walk();
