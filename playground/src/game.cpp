@@ -37,17 +37,22 @@ void doGame() {
 			// Walking
 			if (keyStates[BT_LEFT]
 			&& !keyStates[BT_RIGHT]) {
-				player->setDirection(DIR_LEFT);
 				player->setState("walk");
-				player->walk();
+				player->walk(DIR_LEFT);
 			} else if (keyStates[BT_RIGHT]
 			       && !keyStates[BT_LEFT]) {
-				player->setDirection(DIR_RIGHT);
 				player->setState("walk");
-				player->walk();
+				player->walk(DIR_RIGHT);
 			} else if (player->getState() == "walk") {
 				player->setSpeedX(0);
 				player->setState("stand");
+			}
+
+			// Have the player face the cursor
+			if (mousePos.x < player->getX()) {
+				player->setDirection(DIR_LEFT);
+			} else if (mousePos.x > player->getX()) {
+				player->setDirection(DIR_RIGHT);
 			}
 
 			/* -- Physics -- */

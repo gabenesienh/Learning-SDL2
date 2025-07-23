@@ -20,12 +20,14 @@ bool vec2::operator!=(const vec2& other) const {
 	return !this->operator==(other);
 }
 
-void vec2::normalize() {
+vec2 vec2::normalized() {
 	// Get vector magnitude (pythagorean theorem)
 	double mag = sqrt(pow(this->x, 2) + pow(this->y, 2));
 
-	this->x /= mag;
-	this->y /= mag;
+	return {
+		this->x /= mag,
+		this->y /= mag
+	};
 }
 
 bool init() {

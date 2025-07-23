@@ -1,7 +1,5 @@
 // Game object class definitions and related logic
 
-//TODO: make DIR_* consts into an enum?
-
 #ifndef OBJECTS_HPP
 #define OBJECTS_HPP
 
@@ -72,8 +70,11 @@ class GameObject {
 		// Give the object X and Y speed
 		void thrust(double addX, double addY);
 
-		// Move the object toward the direction it's facing
+		// Move the object moveSpeed units toward the direction it's facing
 		void walk();
+
+		// Move the object moveSpeed units toward a direction
+		void walk(vec2 direction);
 
 		// Pure virtual destructor to ensure the class is abstract
 		virtual ~GameObject() = 0;

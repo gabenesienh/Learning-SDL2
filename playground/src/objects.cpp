@@ -1,5 +1,4 @@
 //TODO: validate position on GameObject::tryMove
-//TODO: validate setDirection based on directionType
 
 #include "objects.hpp"
 
@@ -32,7 +31,7 @@ void GameObject::setSpeedY(double speedY)    { this->speedY = speedY; }
 void GameObject::setState(string state)      { this->state = state; }
 bool GameObject::setDirection(vec2 direction) {
 	// Normalize desired direction into unit vector
-	direction.normalize();
+	direction = direction.normalized();
 
 	// Ensure that the desired direction matches the object's direction type
 	switch (this->directionType) {
@@ -80,6 +79,12 @@ void GameObject::thrust(double addX, double addY) {
 void GameObject::walk() {
 	this->speedX = this->direction.x * this->moveSpeed;
 	this->speedY = this->direction.y * this->moveSpeed;
+}
+void GameObject::walk(vec2 direction) {
+	direction = direction.normalized();
+
+	this->speedX = direction.x * this->moveSpeed;
+	this->speedY = direction.y * this->moveSpeed;
 }
 
 GameObject::~GameObject() {};

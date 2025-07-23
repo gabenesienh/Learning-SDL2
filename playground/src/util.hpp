@@ -20,8 +20,8 @@ struct vec2 {
 	bool operator==(const vec2& other) const;
 	bool operator!=(const vec2& other) const;
 
-	// Make into a unit vector
-	void normalize();
+	// Get a unit vector from this vec2
+	vec2 normalized();
 };
 
 // Initialize SDL
