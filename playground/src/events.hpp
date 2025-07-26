@@ -14,8 +14,8 @@ using std::array;
 // true means pressed, false means not pressed
 extern array<bool, SDL_NUM_SCANCODES> keyStates;
 
-// The current X and Y position of the mouse cursor
-extern vec2 mousePos;
+// The current X and Y position of the mouse cursor on the screen
+extern vec2 mouseScreenPos;
 
 // Event loop
 // Returns false when the window should close

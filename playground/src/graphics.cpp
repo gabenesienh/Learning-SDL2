@@ -12,6 +12,7 @@ using std::abs, std::max;
 void setColors();
 
 // Used for rendering game objects as solid rectangles in debug mode
+// X and Y refer to screen position rather than game position
 // Width and height are adjusted per object while rendering
 SDL_Rect rendererRect;
 
@@ -32,50 +33,51 @@ void doRender() {
 	// Clear screen before drawing
 	SDL_FillRect(gameSurface, NULL, blackColor);
 
-	// Debug info
-	if (debugMode) {
-		for (GameObject* gobj : gameObjects) {
-			/* -- Render object hitbox -- */
+	for (GameObject* gobj : gameObjects) {
+		if (!gobj->isVisible()) return;
 
+		if (debugMode) {
+			/* -- Render object hitbox -- */
+	
 			rendererRect.w = gobj->getWidth();
 			rendererRect.h = gobj->getHeight();
-			rendererRect.x = gobj->getX() - rendererRect.w/2;
-			rendererRect.y = gobj->getY() - rendererRect.h;
+			rendererRect.x = gobj->getScreenX() - rendererRect.w/2;
+			rendererRect.y = gobj->getScreenY() - rendererRect.h;
 			SDL_FillRect(gameSurface, &rendererRect, debugHitboxColor);
-
+	
 			/* -- Draw line from object's center to their direction -- */
-
+	
 			rendererRect.w = 1;
 			rendererRect.h = 1;
-
+	
 			// The starting point of the line (object's center)
-			int centerX = gobj->getX() - rendererRect.w/2;
-			int centerY = gobj->getY() - gobj->getHeight()/2 - rendererRect.h/2;
-
+			int centerX = gobj->getScreenX() - rendererRect.w/2;
+			int centerY = gobj->getScreenY() - gobj->getHeight()/2 - rendererRect.h/2;
+	
 			// The ending point of the line
 			int targetX = centerX + (gobj->getDirection().x * 25);
 			int targetY = centerY + (gobj->getDirection().y * 25);
-
+	
 			drawLine(
 				gameSurface, rendererRect, debugDirectionColor,
 				centerX, centerY,
 				targetX, targetY
 			);
-
+	
 			/* -- Draw line from player object(s) to cursor -- */
-			
+				
 			drawLine(
 				gameSurface, rendererRect, debugPlayerAimColor,
 				centerX, centerY,
-				mousePos.x, mousePos.y
+				mouseScreenPos.x, mouseScreenPos.y
 			);
-
+	
 			/* -- Draw object's anchor point -- */
-
+	
 			rendererRect.w = 4;
 			rendererRect.h = 4;
-			rendererRect.x = gobj->getX() - rendererRect.w/2;
-			rendererRect.y = gobj->getY() - rendererRect.h/2;
+			rendererRect.x = gobj->getScreenX() - rendererRect.w/2;
+			rendererRect.y = gobj->getScreenY() - rendererRect.h/2;
 			SDL_FillRect(gameSurface, &rendererRect, debugAnchorColor);
 		}
 	}

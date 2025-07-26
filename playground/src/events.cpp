@@ -8,7 +8,7 @@
 using std::array;
 
 array<bool, SDL_NUM_SCANCODES> keyStates = {false};
-vec2 mousePos;
+vec2 mouseScreenPos;
 
 SDL_Event event;
 
@@ -24,8 +24,8 @@ bool doEvents() {
 
 				break;
 			case SDL_MOUSEMOTION:
-				mousePos.x = event.motion.x;
-				mousePos.y = event.motion.y;
+				mouseScreenPos.x = event.motion.x;
+				mouseScreenPos.y = event.motion.y;
 
 				break;
 			case SDL_QUIT:

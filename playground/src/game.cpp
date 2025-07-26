@@ -49,9 +49,9 @@ void doGame() {
 			}
 
 			// Have the player face the cursor
-			if (mousePos.x < player->getX()) {
+			if (mouseScreenPos.x < player->getScreenX()) {
 				player->setDirection(DIR_LEFT);
-			} else if (mousePos.x > player->getX()) {
+			} else if (mouseScreenPos.x > player->getScreenX()) {
 				player->setDirection(DIR_RIGHT);
 			}
 

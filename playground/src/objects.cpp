@@ -1,4 +1,6 @@
 //TODO: validate position on GameObject::tryMove
+//TODO: validate screen position getters for GameObject
+//TODO: validate GameObject::isVisible
 
 #include "objects.hpp"
 
@@ -15,6 +17,8 @@ using std::abs;
 // Getters
 double      GameObject::getX() const             { return this->x; }
 double      GameObject::getY() const             { return this->y; }
+double      GameObject::getScreenX() const       { return this->x; }
+double      GameObject::getScreenY() const       { return this->y; }
 int         GameObject::getWidth() const         { return this->width; }
 int         GameObject::getHeight() const        { return this->height; }
 double      GameObject::getSpeedX() const        { return this->speedX; }
@@ -63,18 +67,21 @@ bool GameObject::setDirection(vec2 direction) {
 }
 
 // Other methods
+bool GameObject::isVisible() const {
+	return true;
+}
 void GameObject::teleport(double x, double y) {
 	this->x = x;
 	this->y = y;
+}
+void GameObject::thrust(double addX, double addY) {
+	this->speedX += addX;
+	this->speedY += addY;
 }
 bool GameObject::tryMove(double x, double y) {
 	this->teleport(x, y);
 
 	return true;
-}
-void GameObject::thrust(double addX, double addY) {
-	this->speedX += addX;
-	this->speedY += addY;
 }
 void GameObject::walk() {
 	this->speedX = this->direction.x * this->moveSpeed;

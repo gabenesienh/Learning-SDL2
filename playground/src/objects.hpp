@@ -54,6 +54,10 @@ class GameObject {
 		vec2      getDirection() const;
 		eDirTypes getDirectionType() const;
 
+		// Same as getX and getY, but adjusted for the camera's position
+		double    getScreenX() const;
+		double    getScreenY() const;
+
 		void setWidth(int width);
 		void setHeight(int height);
 		void setSpeedX(double speedX);
@@ -61,14 +65,17 @@ class GameObject {
 		void setState(string state);
 		bool setDirection(vec2 direction);
 
+		// Checks if the object is visible and should be rendered
+		bool isVisible() const;
+
 		// Move object regardless of collision rules
 		void teleport(double x, double y);
 
-		// Move object while checking for collision at the target location
-		bool tryMove(double x, double y);
-
 		// Give the object X and Y speed
 		void thrust(double addX, double addY);
+
+		// Move object while checking for collision at the target location
+		bool tryMove(double x, double y);
 
 		// Move the object moveSpeed units toward the direction it's facing
 		void walk();
