@@ -4,35 +4,35 @@
 
 #include "objects.hpp"
 
-#include <string>
 #include <cmath>
+#include <string>
 
 #include "util.hpp"
 
-using std::string;
 using std::abs;
+using std::string;
 
 /* -- GameObject -- */
 
 // Getters
-double      GameObject::getX() const             { return this->x; }
-double      GameObject::getY() const             { return this->y; }
-double      GameObject::getScreenX() const       { return this->x; }
-double      GameObject::getScreenY() const       { return this->y; }
-int         GameObject::getWidth() const         { return this->width; }
-int         GameObject::getHeight() const        { return this->height; }
-double      GameObject::getSpeedX() const        { return this->speedX; }
-double      GameObject::getSpeedY() const        { return this->speedY; }
-string      GameObject::getState() const         { return this->state; }
-vec2        GameObject::getDirection() const     { return this->direction; }
-eDirTypes   GameObject::getDirectionType() const { return this->directionType; }
+double    GameObject::getX() const             { return this->x; }
+double    GameObject::getY() const             { return this->y; }
+double    GameObject::getScreenX() const       { return this->x; }
+double    GameObject::getScreenY() const       { return this->y; }
+int       GameObject::getWidth() const         { return this->width; }
+int       GameObject::getHeight() const        { return this->height; }
+double    GameObject::getSpeedX() const        { return this->speedX; }
+double    GameObject::getSpeedY() const        { return this->speedY; }
+string    GameObject::getState() const         { return this->state; }
+vec2      GameObject::getDirection() const     { return this->direction; }
+eDirTypes GameObject::getDirectionType() const { return this->directionType; }
 
 // Setters
-void GameObject::setWidth(int width)         { this->width = width; }
-void GameObject::setHeight(int height)       { this->height = height; }
-void GameObject::setSpeedX(double speedX)    { this->speedX = speedX; }
-void GameObject::setSpeedY(double speedY)    { this->speedY = speedY; }
-void GameObject::setState(string state)      { this->state = state; }
+void GameObject::setWidth(int width)          { this->width = width; }
+void GameObject::setHeight(int height)        { this->height = height; }
+void GameObject::setSpeedX(double speedX)     { this->speedX = speedX; }
+void GameObject::setSpeedY(double speedY)     { this->speedY = speedY; }
+void GameObject::setState(string state)       { this->state = state; }
 bool GameObject::setDirection(vec2 direction) {
 	// Normalize desired direction into unit vector
 	direction = direction.normalized();

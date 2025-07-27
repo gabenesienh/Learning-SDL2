@@ -3,25 +3,38 @@
 #include <SDL2/SDL.h>
 #include <iostream>
 #include <deque>
+#include <string>
 
 #include "events.hpp"
+#include "levels.hpp"
 #include "objects.hpp"
 #include "preferences.hpp"
 #include "util.hpp"
 
 using std::cin, std::cout, std::endl;
 using std::deque;
+using std::string;
+
+// Loads the specified level from levelsTable
+Level* loadLevel(string levelName);
 
 bool debugMode = false;
 int gameState = GS_LAUNCHED;
 
+// Points to a copy of a level from levelsTable
+// Receives a value upon calling loadLevel
+Level* loadedLevel;
+
 deque<GameObject*> gameObjects = {};
 
-Player* player;
+Player* player; //the player object in gameObjects
 
 void doGame() {
 	switch (gameState) {
 		case GS_LAUNCHED:
+			// Load level
+			loadedLevel = loadLevel("test");
+
 			// Spawn player
 			player = new Player(
 				WINDOW_WIDTH/2,
@@ -69,7 +82,9 @@ void doGame() {
 
 			// Show debug info if enabled
 			if (debugMode) {
-				cout <<  "x=" << player->getX()
+				cout <<  "Level: " << loadedLevel->getDisplayName() << '\n';
+				cout <<  "Player:"
+					 << " x=" << player->getX()
 				     << " y=" << player->getY()
 				     << " dirx=" << player->getDirection().x
 				     << " diry=" << player->getDirection().y
@@ -77,5 +92,24 @@ void doGame() {
 			}
 
 			break;
+	}
+}
+
+Level* loadLevel(string levelName) {
+	try {
+		Level levelToCopy = levelsTable.at(levelName);
+
+		Level* copiedLevel = new Level(
+			levelToCopy.getDisplayName(),
+			levelToCopy.getTiles()
+		);
+
+		return copiedLevel;
+	} catch (std::out_of_range e) {
+		if (debugMode) {
+			cout << "ERROR: Attempted to load level that doesn't exist" << '\n';
+		}
+
+		return nullptr;
 	}
 }

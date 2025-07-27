@@ -1,3 +1,5 @@
+//TODO: refactor GameObject::getScreen* methods into helper functions
+
 // Game object class definitions and related logic
 
 #ifndef OBJECTS_HPP

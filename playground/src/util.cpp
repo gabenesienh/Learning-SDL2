@@ -1,13 +1,13 @@
 #include "util.hpp"
 
 #include <SDL2/SDL.h>
-#include <iostream>
 #include <cmath>
+#include <iostream>
 
 #include "game.hpp"
 
-using std::cin, std::cout, std::endl;
 using std::pow, std::sqrt;
+using std::cin, std::cout, std::endl;
 
 SDL_Window* window;
 SDL_Surface* winSurface;

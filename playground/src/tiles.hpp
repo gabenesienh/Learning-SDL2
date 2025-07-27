@@ -1,3 +1,5 @@
+// Definitions for classes related to level tiles, and the available tile types
+
 #ifndef TILES_HPP
 #define TILES_HPP
 
@@ -20,13 +22,16 @@ class TileType {
 		int getHeight() const;
 };
 
-// Represents a single tile in a map
+// Represents a single tile in a level
+// X and Y are anchored at the tile's top left corner
 class Tile {
 	private:
 		int typeId; //references tileTypesTable
 		int x;
 		int y;
 	public:
+		Tile(int typeId, int x, int y);
+
 		int getX() const;
 		int getY() const;
 		int getTypeId() const;

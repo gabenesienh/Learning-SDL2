@@ -5,6 +5,7 @@
 
 #include <deque>
 
+#include "levels.hpp"
 #include "objects.hpp"
 
 using std::deque;
@@ -16,8 +17,11 @@ const int GS_STARTED = 1;
 // Enables debug features (e.g. hitboxes)
 extern bool debugMode;
 
-// The current game state
+// The current game state, uses GS_* constants
 extern int gameState;
+
+// Points to currently loaded level
+extern Level* loadedLevel;
 
 // The objects currently present in the game
 extern deque<GameObject*> gameObjects;

@@ -5,6 +5,7 @@
 
 #include "events.hpp"
 #include "game.hpp"
+#include "tiles.hpp"
 #include "util.hpp"
 
 using std::abs, std::max;
@@ -22,6 +23,7 @@ bool isColorsSet = false;
 
 Uint32 blackColor;
 
+Uint32 debugTileColor;
 Uint32 debugHitboxColor;
 Uint32 debugAnchorColor;
 Uint32 debugDirectionColor;
@@ -32,6 +34,21 @@ void doRender() {
 
 	// Clear screen before drawing
 	SDL_FillRect(gameSurface, NULL, blackColor);
+
+	for (Tile& tile : loadedLevel->getTiles()) {
+		const TileType& tileType = tileTypesTable.at(tile.getTypeId());
+
+		if (debugMode) {
+			/* -- Draw tile collision boxes -- */
+
+			rendererRect.w = tileType.getWidth();
+			rendererRect.h = tileType.getHeight();
+			rendererRect.x = tile.getX();
+			rendererRect.y = tile.getY();
+
+			SDL_FillRect(gameSurface, &rendererRect, debugTileColor);
+		}
+	}
 
 	for (GameObject* gobj : gameObjects) {
 		if (!gobj->isVisible()) return;
@@ -117,6 +134,13 @@ void setColors() {
 		0,
 		0,
 		0
+	);
+
+	debugTileColor = SDL_MapRGB(
+		gameSurface->format,
+		255,
+		255,
+		255
 	);
 
 	debugHitboxColor = SDL_MapRGB(
