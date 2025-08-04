@@ -1,8 +1,11 @@
+//TODO: proper collision detection
+
 #include "game.hpp"
 
 #include <SDL2/SDL.h>
-#include <iostream>
+#include <cmath>
 #include <deque>
+#include <iostream>
 #include <string>
 
 #include "events.hpp"
@@ -11,9 +14,14 @@
 #include "preferences.hpp"
 #include "util.hpp"
 
-using std::cin, std::cout, std::endl;
+using std::min;
 using std::deque;
+using std::cin, std::cout, std::endl;
 using std::string;
+
+const double GRAV_ADD = 0.15;
+const double GRAV_MULT = 1.05;
+const double GRAV_CAP = 10;
 
 // Loads the specified level from levelsTable
 Level* loadLevel(string levelName);
@@ -70,23 +78,40 @@ void doGame() {
 
 			/* -- Physics -- */
 
-			// Displace game objects based on their speed
 			for (auto gobj : gameObjects) {
+				// Apply gravity to objects
+				gobj->setSpeedY(gobj->getSpeedY()*GRAV_MULT);
+				gobj->thrust(0, GRAV_ADD);
+
+				// Cap falling speed
+				gobj->setSpeedY(min(gobj->getSpeedY(), GRAV_CAP));
+
+				// Displace game objects based on their speed
 				double targetX = gobj->getX() + gobj->getSpeedX();
 				double targetY = gobj->getY() + gobj->getSpeedY();
 
 				gobj->tryMove(targetX, targetY);
+
+				// TEMPORARY INVISIBLE GROUND
+				if (gobj->getY() > 320) {
+					gobj->teleport(gobj->getX(), 320);
+				}
 			}
 
 			/* -- Debug -- */
 
 			// Show debug info if enabled
 			if (debugMode) {
-				cout <<  "Level: " << loadedLevel->getDisplayName() << '\n';
-				cout <<  "Player:"
-					 << " x=" << player->getX()
-				     << " y=" << player->getY()
-				     << " dirx=" << player->getDirection().x
+				cout <<  "Level " << '\n';
+				cout << " name=" << loadedLevel->getDisplayName() << '\n';
+				cout << '\n';
+				cout <<  "Player" << '\n';
+				cout << " x=" << player->getX()
+				     << " y=" << player->getY() << '\n';
+				cout << " spdx=" << player->getSpeedX()
+				     << " spdy=" << player->getSpeedY()
+				     << std::showpoint << '\n';
+				cout << " dirx=" << player->getDirection().x
 				     << " diry=" << player->getDirection().y
 				     << std::showpoint << '\n';
 			}
