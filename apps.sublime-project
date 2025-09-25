@@ -1,0 +1,19 @@
+{
+	"folders":
+	[
+		{
+			"path": ".",
+		}
+	],
+	"debugger_configurations":
+	[
+		{
+			"type": "gdb",
+			"request": "launch",
+			"name": "Launch Program",
+			"target": "${file_path}/../bin/main",
+			"cwd": "${folder}",
+			"valuesFormatting": "parseText"
+		},
+	],
+}
