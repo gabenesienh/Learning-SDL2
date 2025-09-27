@@ -127,6 +127,13 @@ void drawLine(SDL_Surface* surface, SDL_Rect& rendererRect, Uint32 color, int x0
     }
 }
 
+void drawRectangle(SDL_Surface* surface, SDL_Rect& rendererRect, Uint32 color, int x0, int y0, int x1, int y1) {
+    drawLine(surface, rendererRect, color, x0, y0, x1, y0);
+    drawLine(surface, rendererRect, color, x1, y0, x1, y1);
+    drawLine(surface, rendererRect, color, x1, y1, x0, y1);
+    drawLine(surface, rendererRect, color, x0, y1, x0, y0);
+}
+
 // Necessary due to surface formats being unknown before util.cpp is run
 void setColors() {
     blackColor = SDL_MapRGB(
