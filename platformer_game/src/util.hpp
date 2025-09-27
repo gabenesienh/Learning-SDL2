@@ -14,14 +14,14 @@ extern SDL_Surface* gameSurface;
 
 // Generic 2D vector
 struct vec2 {
-	double x;
-	double y;
+    double x;
+    double y;
 
-	bool operator==(const vec2& other) const;
-	bool operator!=(const vec2& other) const;
+    bool operator==(const vec2& other) const;
+    bool operator!=(const vec2& other) const;
 
-	// Get a unit vector from this vec2
-	vec2 normalized();
+    // Get a unit vector from this vec2
+    vec2 normalized();
 };
 
 // Initialize SDL

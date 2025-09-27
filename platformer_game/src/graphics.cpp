@@ -30,146 +30,146 @@ Uint32 debugDirectionColor;
 Uint32 debugPlayerAimColor;
 
 void doRender() {
-	if (!isColorsSet) setColors();
+    if (!isColorsSet) setColors();
 
-	// Clear screen before drawing
-	SDL_FillRect(gameSurface, NULL, blackColor);
+    // Clear screen before drawing
+    SDL_FillRect(gameSurface, NULL, blackColor);
 
-	for (Tile& tile : loadedLevel->getTiles()) {
-		const TileType& tileType = tileTypesTable.at(tile.getTypeId());
+    for (Tile& tile : loadedLevel->getTiles()) {
+        const TileType& tileType = tileTypesTable.at(tile.getTypeId());
 
-		if (debugMode) {
-			/* -- Draw tile collision boxes -- */
+        if (debugMode) {
+            /* -- Draw tile collision boxes -- */
 
-			rendererRect.w = tileType.getWidth();
-			rendererRect.h = tileType.getHeight();
-			rendererRect.x = tile.getX();
-			rendererRect.y = tile.getY();
+            rendererRect.w = tileType.getWidth();
+            rendererRect.h = tileType.getHeight();
+            rendererRect.x = tile.getX();
+            rendererRect.y = tile.getY();
 
-			SDL_FillRect(gameSurface, &rendererRect, debugTileColor);
-		}
-	}
+            SDL_FillRect(gameSurface, &rendererRect, debugTileColor);
+        }
+    }
 
-	for (GameObject* gobj : gameObjects) {
-		if (!gobj->isVisible()) return;
+    for (GameObject* gobj : gameObjects) {
+        if (!gobj->isVisible()) return;
 
-		if (debugMode) {
-			/* -- Render object hitbox -- */
-	
-			rendererRect.w = gobj->getWidth();
-			rendererRect.h = gobj->getHeight();
-			rendererRect.x = gobj->getScreenX() - rendererRect.w/2;
-			rendererRect.y = gobj->getScreenY() - rendererRect.h;
-			SDL_FillRect(gameSurface, &rendererRect, debugHitboxColor);
-	
-			/* -- Draw line from object's center to their direction -- */
-	
-			rendererRect.w = 1;
-			rendererRect.h = 1;
-	
-			// The starting point of the line (object's center)
-			int centerX = gobj->getScreenX() - rendererRect.w/2;
-			int centerY = gobj->getScreenY() - gobj->getHeight()/2 - rendererRect.h/2;
-	
-			// The ending point of the line
-			int targetX = centerX + (gobj->getDirection().x * 25);
-			int targetY = centerY + (gobj->getDirection().y * 25);
-	
-			drawLine(
-				gameSurface, rendererRect, debugDirectionColor,
-				centerX, centerY,
-				targetX, targetY
-			);
-	
-			/* -- Draw line from player object(s) to cursor -- */
-				
-			drawLine(
-				gameSurface, rendererRect, debugPlayerAimColor,
-				centerX, centerY,
-				mouseScreenPos.x, mouseScreenPos.y
-			);
-	
-			/* -- Draw object's anchor point -- */
-	
-			rendererRect.w = 4;
-			rendererRect.h = 4;
-			rendererRect.x = gobj->getScreenX() - rendererRect.w/2;
-			rendererRect.y = gobj->getScreenY() - rendererRect.h/2;
-			SDL_FillRect(gameSurface, &rendererRect, debugAnchorColor);
-		}
-	}
+        if (debugMode) {
+            /* -- Render object hitbox -- */
+    
+            rendererRect.w = gobj->getWidth();
+            rendererRect.h = gobj->getHeight();
+            rendererRect.x = gobj->getScreenX() - rendererRect.w/2;
+            rendererRect.y = gobj->getScreenY() - rendererRect.h;
+            SDL_FillRect(gameSurface, &rendererRect, debugHitboxColor);
+    
+            /* -- Draw line from object's center to their direction -- */
+    
+            rendererRect.w = 1;
+            rendererRect.h = 1;
+    
+            // The starting point of the line (object's center)
+            int centerX = gobj->getScreenX() - rendererRect.w/2;
+            int centerY = gobj->getScreenY() - gobj->getHeight()/2 - rendererRect.h/2;
+    
+            // The ending point of the line
+            int targetX = centerX + (gobj->getDirection().x * 25);
+            int targetY = centerY + (gobj->getDirection().y * 25);
+    
+            drawLine(
+                gameSurface, rendererRect, debugDirectionColor,
+                centerX, centerY,
+                targetX, targetY
+            );
+    
+            /* -- Draw line from player object(s) to cursor -- */
+                
+            drawLine(
+                gameSurface, rendererRect, debugPlayerAimColor,
+                centerX, centerY,
+                mouseScreenPos.x, mouseScreenPos.y
+            );
+    
+            /* -- Draw object's anchor point -- */
+    
+            rendererRect.w = 4;
+            rendererRect.h = 4;
+            rendererRect.x = gobj->getScreenX() - rendererRect.w/2;
+            rendererRect.y = gobj->getScreenY() - rendererRect.h/2;
+            SDL_FillRect(gameSurface, &rendererRect, debugAnchorColor);
+        }
+    }
 
-	SDL_BlitSurface(gameSurface, NULL, winSurface, NULL);
-	SDL_UpdateWindowSurface(window);
+    SDL_BlitSurface(gameSurface, NULL, winSurface, NULL);
+    SDL_UpdateWindowSurface(window);
 }
 
 void drawLine(SDL_Surface* surface, SDL_Rect& rendererRect, Uint32 color, int x0, int y0, int x1, int y1) {
-	// Deltas
-	int dx = x1 - x0;
-	int dy = y1 - y0;
+    // Deltas
+    int dx = x1 - x0;
+    int dy = y1 - y0;
 
-	// The magnitude of the delta whose magnitude is the largest
-	// This will help determine which octant the line is in
-	double step = max(abs(dx), abs(dy));
+    // The magnitude of the delta whose magnitude is the largest
+    // This will help determine which octant the line is in
+    double step = max(abs(dx), abs(dy));
 
-	// How much X and Y should change with each "step" from (x0,y0) to (x1,y1)
-	// Depending on the octant, one of these will always be 1 or -1
-	double stepX = dx / step;
-	double stepY = dy / step;
+    // How much X and Y should change with each "step" from (x0,y0) to (x1,y1)
+    // Depending on the octant, one of these will always be 1 or -1
+    double stepX = dx / step;
+    double stepY = dy / step;
 
-	for (int i = 0; i <= step; i++) {
-		if (step == 0) break; // Avoid division by zero error
+    for (int i = 0; i <= step; i++) {
+        if (step == 0) break; // Avoid division by zero error
 
-		rendererRect.x = x0 + stepX*i;
-		rendererRect.y = y0 + stepY*i;
+        rendererRect.x = x0 + stepX*i;
+        rendererRect.y = y0 + stepY*i;
 
-		SDL_FillRect(surface, &rendererRect, color);
-	}
+        SDL_FillRect(surface, &rendererRect, color);
+    }
 }
 
 // Necessary due to surface formats being unknown before util.cpp is run
 void setColors() {
-	blackColor = SDL_MapRGB(
-		gameSurface->format,
-		0,
-		0,
-		0
-	);
+    blackColor = SDL_MapRGB(
+        gameSurface->format,
+        0,
+        0,
+        0
+    );
 
-	debugTileColor = SDL_MapRGB(
-		gameSurface->format,
-		255,
-		255,
-		255
-	);
+    debugTileColor = SDL_MapRGB(
+        gameSurface->format,
+        255,
+        255,
+        255
+    );
 
-	debugHitboxColor = SDL_MapRGB(
-		gameSurface->format,
-		255,
-		31,
-		31
-	);
+    debugHitboxColor = SDL_MapRGB(
+        gameSurface->format,
+        255,
+        31,
+        31
+    );
 
-	debugAnchorColor = SDL_MapRGB(
-		gameSurface->format,
-		31,
-		255,
-		255
-	);
+    debugAnchorColor = SDL_MapRGB(
+        gameSurface->format,
+        31,
+        255,
+        255
+    );
 
-	debugDirectionColor = SDL_MapRGB(
-		gameSurface->format,
-		255,
-		127,
-		31
-	);
+    debugDirectionColor = SDL_MapRGB(
+        gameSurface->format,
+        255,
+        127,
+        31
+    );
 
-	debugPlayerAimColor = SDL_MapRGB(
-		gameSurface->format,
-		31,
-		255,
-		31
-	);
+    debugPlayerAimColor = SDL_MapRGB(
+        gameSurface->format,
+        31,
+        255,
+        31
+    );
 
-	isColorsSet = true;
+    isColorsSet = true;
 }

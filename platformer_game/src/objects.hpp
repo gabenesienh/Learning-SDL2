@@ -28,74 +28,74 @@ const vec2 DIR_DOWN = {0, 1};
 // Pre-defined sets of directions an object is allowed to have
 // Used in GameObject->setDirection() to prevent invalid directions for objects
 enum eDirTypes {
-	none,
-	horizontal,
-	orthogonal,
-	omni,
+    none,
+    horizontal,
+    orthogonal,
+    omni,
 };
 
 // Abstract class for specialized objects to implement
 class GameObject {
-	protected:
-		double    x             = 0;
-		double    y             = 0;
-		int       width         = 16;
-		int       height        = 16;
-		double    speedX        = 0;
-		double    speedY        = 0;
-		double    moveSpeed     = 1;
-		string    state         = "";
-		vec2      direction     = DIR_NONE;
-		eDirTypes directionType = eDirTypes::none;
-	public:
-		double    getX() const;
-		double    getY() const;
-		int       getWidth() const;
-		int       getHeight() const;
-		double    getSpeedX() const;
-		double    getSpeedY() const;
-		string    getState() const;
-		vec2      getDirection() const;
-		eDirTypes getDirectionType() const;
+    protected:
+        double    x             = 0;
+        double    y             = 0;
+        int       width         = 16;
+        int       height        = 16;
+        double    speedX        = 0;
+        double    speedY        = 0;
+        double    moveSpeed     = 1;
+        string    state         = "";
+        vec2      direction     = DIR_NONE;
+        eDirTypes directionType = eDirTypes::none;
+    public:
+        double    getX() const;
+        double    getY() const;
+        int       getWidth() const;
+        int       getHeight() const;
+        double    getSpeedX() const;
+        double    getSpeedY() const;
+        string    getState() const;
+        vec2      getDirection() const;
+        eDirTypes getDirectionType() const;
 
-		// Same as getX and getY, but adjusted for the camera's position
-		double    getScreenX() const;
-		double    getScreenY() const;
+        // Same as getX and getY, but adjusted for the camera's position
+        double    getScreenX() const;
+        double    getScreenY() const;
 
-		void setWidth(int width);
-		void setHeight(int height);
-		void setSpeedX(double speedX);
-		void setSpeedY(double speedY);
-		void setState(string state);
-		bool setDirection(vec2 direction);
+        void setWidth(int width);
+        void setHeight(int height);
+        void setSpeedX(double speedX);
+        void setSpeedY(double speedY);
+        void setState(string state);
+        bool setDirection(vec2 direction);
 
-		// Checks if the object is visible and should be rendered
-		bool isVisible() const;
+        // Checks if the object is visible and should be rendered
+        bool isVisible() const;
 
-		// Move object regardless of collision rules
-		void teleport(double x, double y);
+        // Move object regardless of collision rules
+        void teleport(double x, double y);
 
-		// Give the object X and Y speed
-		void thrust(double addX, double addY);
+        // Give the object X and Y speed
+        void thrust(double addX, double addY);
 
-		// Move object while checking for collision at the target location
-		bool tryMove(double x, double y);
+        // Move object while checking for collision at the target location
+        bool tryMove(double x, double y);
 
-		// Move the object moveSpeed units toward the direction it's facing
-		void walk();
+        // Move the object moveSpeed units toward the direction it's facing
+        void walk();
 
-		// Move the object moveSpeed units toward a direction
-		void walk(vec2 direction);
+        // Move the object moveSpeed units toward a direction
+        void walk(vec2 direction);
 
-		// Pure virtual destructor to ensure the class is abstract
-		virtual ~GameObject() = 0;
+        // Pure virtual destructor to ensure the class is abstract
+        virtual ~GameObject() = 0;
 };
 
 // The player character
 class Player : public GameObject {
-	public:
-		Player();
-		Player(double x, double y);
+    public:
+        Player();
+        Player(double x, double y);
 };
 
 #endif

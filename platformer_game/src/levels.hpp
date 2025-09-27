@@ -15,14 +15,14 @@ using std::vector;
 
 // A group of tiles which represents a playable level
 class Level {
-	private:
-		string       displayName;
-		vector<Tile> tiles;
-	public:
-		Level(string displayName, vector<Tile> tiles);
+    private:
+        string       displayName;
+        vector<Tile> tiles;
+    public:
+        Level(string displayName, vector<Tile> tiles);
 
-		string       getDisplayName() const;
-		vector<Tile> getTiles() const;
+        string       getDisplayName() const;
+        vector<Tile> getTiles() const;
 };
 
 // All Level definitions go here
