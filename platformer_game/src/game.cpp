@@ -6,6 +6,7 @@
 #include <cmath>
 #include <deque>
 #include <iostream>
+#include <iomanip>
 #include <string>
 
 #include "events.hpp"
@@ -17,17 +18,26 @@
 using std::min;
 using std::deque;
 using std::cin, std::cout, std::endl;
+using std::setw;
 using std::string;
 
+// Usage: speedY += speedY*GRAV_MULT + GRAV_ADD
 const double GRAV_ADD = 0.15;
-const double GRAV_MULT = 1.05;
+const double GRAV_MULT = 0.05;
 const double GRAV_CAP = 10;
 
 // Loads the specified level from levelsTable
 Level* loadLevel(string levelName);
 
-bool debugMode = false;
+// Sends debug info to standard output, based on the value of debugMode
+void printDebugInfo();
+
+int debugMode = 0;
 int gameState = GS_LAUNCHED;
+
+// Counts up to 1 and then resets to zero
+// Used for delaying debug output
+double debugOutputTimer = 0;
 
 // Points to a copy of a level from levelsTable
 // Receives a value upon calling loadLevel
@@ -80,15 +90,14 @@ void doGame() {
 
             for (auto gobj : gameObjects) {
                 // Apply gravity to objects
-                gobj->setSpeedY(gobj->getSpeedY()*GRAV_MULT);
-                gobj->thrust(0, GRAV_ADD);
+                gobj->thrust(0, (gobj->getSpeedY()*GRAV_MULT + GRAV_ADD)*dt);
 
                 // Cap falling speed
                 gobj->setSpeedY(min(gobj->getSpeedY(), GRAV_CAP));
 
                 // Displace game objects based on their speed
-                double targetX = gobj->getX() + gobj->getSpeedX();
-                double targetY = gobj->getY() + gobj->getSpeedY();
+                double targetX = gobj->getX() + gobj->getSpeedX()*dt;
+                double targetY = gobj->getY() + gobj->getSpeedY()*dt;
 
                 gobj->tryMove(targetX, targetY);
 
@@ -102,18 +111,12 @@ void doGame() {
 
             // Show debug info if enabled
             if (debugMode) {
-                cout <<  "Level " << '\n';
-                cout << " name=" << loadedLevel->getDisplayName() << '\n';
-                cout << '\n';
-                cout <<  "Player" << '\n';
-                cout << " x=" << player->getX()
-                     << " y=" << player->getY() << '\n';
-                cout << " spdx=" << player->getSpeedX()
-                     << " spdy=" << player->getSpeedY()
-                     << std::showpoint << '\n';
-                cout << " dirx=" << player->getDirection().x
-                     << " diry=" << player->getDirection().y
-                     << std::showpoint << '\n';
+                debugOutputTimer += dt;
+
+                if (debugOutputTimer >= 1) {
+                    printDebugInfo();
+                    debugOutputTimer = 0;
+                }
             }
 
             break;
@@ -136,5 +139,27 @@ Level* loadLevel(string levelName) {
         }
 
         return nullptr;
+    }
+}
+
+void printDebugInfo() {
+    if (debugMode & 0x0001) {
+        cout << setw(10) << "fps="        << setw(16) << static_cast<int>(60/dt) << '\n'
+             << '\n';
+    }
+    if (debugMode & 0x0010) {
+        cout << setw(10) << "lvlname="    << setw(16) << loadedLevel->getDisplayName() << '\n'
+             << '\n';
+    }
+    if (debugMode & 0x0100) {
+        cout << setw(10) << "x="          << setw(16) << player->getX() << '\n'
+             << setw(10) << "y="          << setw(16) << player->getY() << '\n'
+             << setw(10) << "spdx="       << setw(16) << player->getSpeedX() << '\n'
+             << setw(10) << "spdy="       << setw(16) << player->getSpeedY() << '\n'
+             << std::showpoint
+             << setw(10) << "dirx="       << setw(16) << player->getDirection().x << '\n'
+             << setw(10) << "diry="       << setw(16) << player->getDirection().y << '\n'
+             << std::showpoint
+             << '\n';
     }
 }

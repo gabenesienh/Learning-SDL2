@@ -19,20 +19,48 @@
 	"build_systems":
 	[
 		{
-			"name": "Build (dev, win)",
-			"shell_cmd": "g++ -g ${file_path}/*.cpp -o ${file_path}/../bin/main.exe -I ${file_path}/../include -I ${folder}/../SDL2-x64/include -L ${folder}/../SDL2-x64/lib -lmingw32 -lSDL2main -lSDL2"
+			"name": "Build (dev)",
+			"selector": "source.c++",
+			"windows": {
+				"cmd":
+				[
+					"g++", "-g", "${file_path}/*.cpp", "-o", "${file_path}/../bin/main.exe",
+					"-I", "${file_path}/../include",
+					"-I", "${folder}/../SDL2-x64/include",
+					"-L", "${folder}/../SDL2-x64/lib",
+					"-lmingw32", "-lSDL2main", "-lSDL2",
+				],
+			},
+			"linux": {
+				"cmd":
+				[
+					"g++", "-g", "${file_path}/*.cpp", "-o", "${file_path}/../bin/main",
+					"-I", "${file_path}/../include",
+					"-lSDL2main", "-lSDL2",
+				]
+			},
 		},
 		{
-			"name": "Build (dev, linux)",
-			"shell_cmd": "g++ -g ${file_path}/*.cpp -o ${file_path}/../bin/main -I ${file_path}/../include -lSDL2main -lSDL2"
-		},
-		{
-			"name": "Build (release, win)",
-			"shell_cmd": "g++ -O2 -DNDEBUG ${file_path}/*.cpp -o ${file_path}/../bin/main.exe -I ${file_path}/../include -I ${folder}/../SDL2-x64/include -L ${folder}/../SDL2-x64/lib -lmingw32 -lSDL2main -lSDL2"
-		},
-		{
-			"name": "Build (release, linux)",
-			"shell_cmd": "g++ -O2 -DNDEBUG ${file_path}/*.cpp -o ${file_path}/../bin/main -I ${file_path}/../include -lSDL2main -lSDL2"
+			"name": "Build (release)",
+			"selector": "source.c++",
+			"windows": {
+				"cmd":
+				[
+					"g++", "-O2", "-DNDEBUG", "${file_path}/*.cpp", "-o", "${file_path}/../bin/main.exe",
+					"-I", "${file_path}/../include",
+					"-I", "${folder}/../SDL2-x64/include",
+					"-L", "${folder}/../SDL2-x64/lib",
+					"-lmingw32", "-lSDL2main", "-lSDL2", "-mwindows",
+				],
+			},
+			"linux": {
+				"cmd":
+				[
+					"g++", "-O2", "-DNDEBUG", "${file_path}/*.cpp", "-o", "${file_path}/../bin/main",
+					"-I", "${file_path}/../include",
+					"-lSDL2main", "-lSDL2",
+				]
+			},
 		},
 	],
 	"debugger_configurations":
@@ -44,7 +72,7 @@
 			"target": "${file_path}/../bin/main",
 			"cwd": "${folder}",
 			"valuesFormatting": "parseText",
-			"terminal": "external",
+			"terminal": "",
 		},
 	],
 }

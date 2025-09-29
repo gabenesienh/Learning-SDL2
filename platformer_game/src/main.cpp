@@ -7,22 +7,22 @@
 #include "graphics.hpp"
 #include "util.hpp"
 
-const double TARGET_FRAMERATE = 60;
+double dt = 0;
 
+// The number acquired from SDL_GetPerformanceCounter() the previous frame
+// For calculating delta time
 Uint64 ticksLast = 0;
-double deltaTime = 0; // In seconds
 
 int main(int argc, char** argv) {
     if (!init()) return 1;
 
-    debugMode = true;
+    debugMode = 0x1001;
 
     while (true) {
-        deltaTime = static_cast<double>(SDL_GetTicks64() - ticksLast)/1000;
-
-        if (deltaTime < 1/TARGET_FRAMERATE) continue; // Framerate cap
-
-        ticksLast = SDL_GetTicks64();
+        // Update delta time
+        dt = SDL_GetPerformanceCounter() - ticksLast;
+        dt *= 60.0/SDL_GetPerformanceFrequency();
+        ticksLast = SDL_GetPerformanceCounter();
 
         if (!doEvents()) break;
         doGame();

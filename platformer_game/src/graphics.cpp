@@ -38,7 +38,7 @@ void doRender() {
     for (Tile& tile : loadedLevel->getTiles()) {
         const TileType& tileType = tileTypesTable.at(tile.getTypeId());
 
-        if (debugMode) {
+        if (debugMode & 0x1000) {
             /* -- Draw tile collision boxes -- */
 
             rendererRect.w = tileType.getWidth();
@@ -53,7 +53,7 @@ void doRender() {
     for (GameObject* gobj : gameObjects) {
         if (!gobj->isVisible()) return;
 
-        if (debugMode) {
+        if (debugMode & 0x1000) {
             /* -- Render object hitbox -- */
     
             rendererRect.w = gobj->getWidth();
