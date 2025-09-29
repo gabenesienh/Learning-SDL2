@@ -21,7 +21,8 @@
 		{
 			"name": "Build (dev)",
 			"selector": "source.c++",
-			"windows": {
+			"windows":
+			{
 				"cmd":
 				[
 					"g++", "-g", "${file_path}/*.cpp", "-o", "${file_path}/../bin/main.exe",
@@ -31,19 +32,16 @@
 					"-lmingw32", "-lSDL2main", "-lSDL2",
 				],
 			},
-			"linux": {
-				"cmd":
-				[
-					"g++", "-g", "${file_path}/*.cpp", "-o", "${file_path}/../bin/main",
-					"-I", "${file_path}/../include",
-					"-lSDL2main", "-lSDL2",
-				]
+			"linux":
+			{
+				"shell_cmd": "g++ -g ${file_path}/*.cpp -o ${file_path}/../bin/main -I ${file_path}/../include -lSDL2",
 			},
 		},
 		{
 			"name": "Build (release)",
 			"selector": "source.c++",
-			"windows": {
+			"windows":
+			{
 				"cmd":
 				[
 					"g++", "-O2", "-DNDEBUG", "${file_path}/*.cpp", "-o", "${file_path}/../bin/main.exe",
@@ -53,13 +51,9 @@
 					"-lmingw32", "-lSDL2main", "-lSDL2", "-mwindows",
 				],
 			},
-			"linux": {
-				"cmd":
-				[
-					"g++", "-O2", "-DNDEBUG", "${file_path}/*.cpp", "-o", "${file_path}/../bin/main",
-					"-I", "${file_path}/../include",
-					"-lSDL2main", "-lSDL2",
-				]
+			"linux":
+			{
+				"shell_cmd": "g++ -O2 -DNDEBUG ${file_path}/*.cpp -o ${file_path}/../bin/main -I ${file_path}/../include -lSDL2",
 			},
 		},
 	],
