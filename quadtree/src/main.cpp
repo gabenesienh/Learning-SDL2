@@ -1,68 +1,51 @@
 // Quadtree implementation test
 
 #include <SDL2/SDL.h>
+#include <array>
+#include <random>
 
 #include "events.hpp"
+#include "graphics.hpp"
+#include "quadtree.hpp"
 #include "util.hpp"
 
-class Node {
-    public:
-        virtual ~Node() = 0;
-};
+using std::array;
 
-class Point : public Node {
-    public:
-        int x;
-        int y;
+// How many points to populate with
+const int POINT_COUNT = 250;
 
-        Point() {
-            this->x = 0;
-            this->y = 0;
-        }
+// Rect used for drawing things on the window surface
+SDL_Rect rendererRect = {0, 0, 1, 1};
 
-        Point(int x, int y) {
-            this->x = x;
-            this->y = y;
-        }
-};
+// The top-most node of the quadtree
+QuadTree root = QuadTree(
+    AABB(
+        Point(WINDOW_WIDTH/2, WINDOW_HEIGHT/2),
+        WINDOW_HEIGHT/2
+    )
+);
 
-class AABB {
-    public:
-        Point center;
-        double inradius;
-    
-        AABB(Point center, double inradius) {
-            this->center = center;
-            this->inradius = inradius;
-        }
-    
-        bool containsPoint(Point point) {
-            if (point.x >= this->center.x - this->inradius
-            &&  point.x <= this->center.x + this->inradius
-            &&  point.y >= this->center.y - this->inradius
-            &&  point.y <= this->center.y + this->inradius) {
-                return true;
-            }
-
-            return false;
-        }
-};
-
-class Subdivision {
-    public:
-        AABB boundary;
-
-        Node* nw;
-        Node* ne;
-        Node* sw;
-        Node* se;
-};
+// For generating random point coordinates that are inside root's boundary
+std::uniform_int_distribution<int> distRoot(0, root.boundary.inradius*2);
+std::mt19937 rng(std::random_device{}());
 
 int main(int argc, char** argv) {
     if (!init()) return 1;
 
+    // Populate the tree on launch
+    for (int i = 0; i < POINT_COUNT; i++) {
+        root.insert(
+            Point(
+                root.boundary.center.x - root.boundary.inradius + distRoot(rng),
+                root.boundary.center.y - root.boundary.inradius + distRoot(rng)
+            )
+        );
+    }
+
     while (true) {
         if (!doEvents()) break;
+        clearScreen();
+        renderTree(&root, rendererRect);
     }
 
     kill();

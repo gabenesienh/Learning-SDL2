@@ -3,6 +3,8 @@
 
 #include <SDL2/SDL.h>
 
+#include "quadtree.hpp"
+
 extern void drawLine(
     SDL_Surface* surface,
     SDL_Rect& rendererRect,
@@ -21,5 +23,11 @@ extern void drawRectangle(
     int x1,
     int y1
 );
+
+// Draws the tree and its points
+extern void renderTree(QuadTree* tree, SDL_Rect& rendererRect);
+
+// Fills the window surface with the background color
+extern void clearScreen();
 
 #endif

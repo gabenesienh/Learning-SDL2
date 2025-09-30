@@ -3,7 +3,44 @@
 #include <SDL2/SDL.h>
 #include <cmath>
 
+#include "quadtree.hpp"
+#include "util.hpp"
+
 using std::max, std::abs;
+
+bool isColorsSet = false;
+Uint32 colorBackground;
+Uint32 colorTree;
+Uint32 colorPoint;
+
+// Gives values to the color* variables
+// Necessary since winSurface->format is null at compile time
+void setColors() {
+    if (isColorsSet) return;
+
+    colorBackground = SDL_MapRGB(
+        winSurface->format,
+        0,
+        0,
+        0
+    );
+
+    colorTree = SDL_MapRGB(
+        winSurface->format,
+        255,
+        127,
+        63
+    );
+
+    colorPoint = SDL_MapRGB(
+        winSurface->format,
+        255,
+        255,
+        255
+    );
+
+    isColorsSet = true;
+}
 
 void drawLine(SDL_Surface* surface, SDL_Rect& rendererRect, Uint32 color, int x0, int y0, int x1, int y1) {
     // Deltas
@@ -34,4 +71,51 @@ void drawRectangle(SDL_Surface* surface, SDL_Rect& rendererRect, Uint32 color, i
     drawLine(surface, rendererRect, color, x1, y0, x1, y1);
     drawLine(surface, rendererRect, color, x1, y1, x0, y1);
     drawLine(surface, rendererRect, color, x0, y1, x0, y0);
+}
+
+void renderTree(QuadTree* tree, SDL_Rect& rendererRect) {
+    if (tree == nullptr) return;
+
+    setColors();
+
+    /* -- Draw tree outline -- */
+
+    rendererRect.w = 1;
+    rendererRect.h = 1;
+
+    if (tree->nw == nullptr) {
+        drawRectangle(
+            winSurface,
+            rendererRect,
+            colorTree,
+            tree->boundary.center.x - tree->boundary.inradius,
+            tree->boundary.center.y - tree->boundary.inradius,
+            tree->boundary.center.x + tree->boundary.inradius,
+            tree->boundary.center.y + tree->boundary.inradius
+        );
+    } else {
+        renderTree(tree->nw, rendererRect);
+        renderTree(tree->ne, rendererRect);
+        renderTree(tree->sw, rendererRect);
+        renderTree(tree->se, rendererRect);
+    }
+
+    /* -- Draw tree points -- */
+
+    rendererRect.w = 3;
+    rendererRect.h = 3;
+
+    for (Point& point : tree->points) {
+        rendererRect.x = point.x;
+        rendererRect.y = point.y;
+        SDL_FillRect(winSurface, &rendererRect, colorPoint);
+    }
+
+    rendererRect.w = 1;
+    rendererRect.h = 1;
+}
+
+void clearScreen() {
+    // Clear screen
+    SDL_FillRect(winSurface, NULL, colorBackground);
 }
