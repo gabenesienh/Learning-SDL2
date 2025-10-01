@@ -17,7 +17,7 @@ bool init() {
     }
 
     window = SDL_CreateWindow(
-        "Template",
+        "Quadtree",
         SDL_WINDOWPOS_UNDEFINED,
         SDL_WINDOWPOS_UNDEFINED,
         WINDOW_WIDTH,
