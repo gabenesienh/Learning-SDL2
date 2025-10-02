@@ -48,79 +48,79 @@ deque<GameObject*> gameObjects = {};
 Player* player; //the player object in gameObjects
 
 void doGame() {
-    switch (gameState) {
-        case GS_LAUNCHED:
-            // Load level
-            loadedLevel = loadLevel("test");
+switch (gameState) {
+case GS_LAUNCHED:
+    // Load level
+    loadedLevel = loadLevel("test");
 
-            // Spawn player
-            player = new Player(
-                WINDOW_WIDTH/2,
-                WINDOW_HEIGHT/2
-            );
-            gameObjects.push_back(player);
+    // Spawn player
+    player = new Player(
+        WINDOW_WIDTH/2,
+        WINDOW_HEIGHT/2
+    );
+    gameObjects.push_back(player);
 
-            gameState = GS_STARTED;
-            break;
-        case GS_STARTED:
-            /* -- Player input handling -- */
+    gameState = GS_STARTED;
+    break;
+case GS_STARTED:
+    /* -- Player input handling -- */
 
-            // Walking
-            if (keyStates[BT_LEFT]
-            && !keyStates[BT_RIGHT]) {
-                player->setState("walk");
-                player->walk(DIR_LEFT);
-            } else if (keyStates[BT_RIGHT]
-                   && !keyStates[BT_LEFT]) {
-                player->setState("walk");
-                player->walk(DIR_RIGHT);
-            } else if (player->getState() == "walk") {
-                player->setSpeedX(0);
-                player->setState("stand");
-            }
-
-            // Have the player face the cursor
-            if (mouseScreenPos.x < player->getScreenX()) {
-                player->setDirection(DIR_LEFT);
-            } else if (mouseScreenPos.x > player->getScreenX()) {
-                player->setDirection(DIR_RIGHT);
-            }
-
-            /* -- Physics -- */
-
-            for (auto gobj : gameObjects) {
-                // Apply gravity to objects
-                gobj->thrust(0, (gobj->getSpeedY()*GRAV_MULT + GRAV_ADD)*dt);
-
-                // Cap falling speed
-                gobj->setSpeedY(min(gobj->getSpeedY(), GRAV_CAP));
-
-                // Displace game objects based on their speed
-                double targetX = gobj->getX() + gobj->getSpeedX()*dt;
-                double targetY = gobj->getY() + gobj->getSpeedY()*dt;
-
-                gobj->tryMove(targetX, targetY);
-
-                // TEMPORARY INVISIBLE GROUND
-                if (gobj->getY() > 320) {
-                    gobj->teleport(gobj->getX(), 320);
-                }
-            }
-
-            /* -- Debug -- */
-
-            // Show debug info if enabled
-            if (debugMode) {
-                debugOutputTimer += dt;
-
-                if (debugOutputTimer >= 1) {
-                    printDebugInfo();
-                    debugOutputTimer = 0;
-                }
-            }
-
-            break;
+    // Walking
+    if (keyStates[BT_LEFT]
+    && !keyStates[BT_RIGHT]) {
+        player->setState("walk");
+        player->walk(DIR_LEFT);
+    } else if (keyStates[BT_RIGHT]
+           && !keyStates[BT_LEFT]) {
+        player->setState("walk");
+        player->walk(DIR_RIGHT);
+    } else if (player->getState() == "walk") {
+        player->setSpeedX(0);
+        player->setState("stand");
     }
+
+    // Have the player face the cursor
+    if (mouseScreenPos.x < player->getScreenX()) {
+        player->setDirection(DIR_LEFT);
+    } else if (mouseScreenPos.x > player->getScreenX()) {
+        player->setDirection(DIR_RIGHT);
+    }
+
+    /* -- Physics -- */
+
+    for (auto gobj : gameObjects) {
+        // Apply gravity to objects
+        gobj->thrust(0, (gobj->getSpeedY()*GRAV_MULT + GRAV_ADD)*dt);
+
+        // Cap falling speed
+        gobj->setSpeedY(min(gobj->getSpeedY(), GRAV_CAP));
+
+        // Displace game objects based on their speed
+        double targetX = gobj->getX() + gobj->getSpeedX()*dt;
+        double targetY = gobj->getY() + gobj->getSpeedY()*dt;
+
+        gobj->tryMove(targetX, targetY);
+
+        // TEMPORARY INVISIBLE GROUND
+        if (gobj->getY() > 320) {
+            gobj->teleport(gobj->getX(), 320);
+        }
+    }
+
+    /* -- Debug -- */
+
+    // Show debug info if enabled
+    if (debugMode) {
+        debugOutputTimer += dt;
+
+        if (debugOutputTimer >= 1) {
+            printDebugInfo();
+            debugOutputTimer = 0;
+        }
+    }
+
+    break;
+}
 }
 
 Level* loadLevel(string levelName) {
@@ -143,15 +143,15 @@ Level* loadLevel(string levelName) {
 }
 
 void printDebugInfo() {
-    if (debugMode & 0x0001) {
+    if (debugMode & DEBUG_PERFORMANCE_INFO) {
         cout << setw(10) << "fps="        << setw(16) << static_cast<int>(60/dt) << '\n'
              << '\n';
     }
-    if (debugMode & 0x0010) {
+    if (debugMode & DEBUG_LEVEL_INFO) {
         cout << setw(10) << "lvlname="    << setw(16) << loadedLevel->getDisplayName() << '\n'
              << '\n';
     }
-    if (debugMode & 0x0100) {
+    if (debugMode & DEBUG_PLAYER_INFO) {
         cout << setw(10) << "x="          << setw(16) << player->getX() << '\n'
              << setw(10) << "y="          << setw(16) << player->getY() << '\n'
              << setw(10) << "spdx="       << setw(16) << player->getSpeedX() << '\n'

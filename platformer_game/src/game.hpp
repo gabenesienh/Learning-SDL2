@@ -14,11 +14,14 @@ using std::deque;
 const int GS_LAUNCHED = 0;
 const int GS_STARTED = 1;
 
+// Flags for use with debugMode
+const int DEBUG_PERFORMANCE_INFO = 0x0001;
+const int DEBUG_LEVEL_INFO       = 0x0010;
+const int DEBUG_PLAYER_INFO      = 0x0100;
+const int DEBUG_SHOW_HITBOXES    = 0x1000;
+
 // Enables debug features
-// 0x0001: Performance info in output
-// 0x0010: Level info in output
-// 0x0100: Player info in output
-// 0x0100: Hitbox visualization
+// To be used with DEBUG_* consts, use bitwise operations to combine flags
 extern int debugMode;
 
 // Delta time

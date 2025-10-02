@@ -16,7 +16,7 @@ Uint64 ticksLast = 0;
 int main(int argc, char** argv) {
     if (!init()) return 1;
 
-    debugMode = 0x1001;
+    debugMode = DEBUG_PERFORMANCE_INFO | DEBUG_SHOW_HITBOXES;
 
     while (true) {
         // Update delta time
