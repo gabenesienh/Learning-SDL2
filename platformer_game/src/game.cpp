@@ -1,4 +1,4 @@
-//TODO: proper collision detection
+//TODO: implement quadtree structure for handling GameObjects
 
 #include "game.hpp"
 

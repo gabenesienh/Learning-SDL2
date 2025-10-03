@@ -1,6 +1,8 @@
 //TODO: refactor GameObject::getScreen* methods into helper functions
 //TODO: add attributes for hitbox anchor alignment
 //TODO: add weight attribute
+//TODO: replace x, y, width and height properties of GameObject with AABB
+    //TODO: refactor spatial methods to adjust for hitbox anchor alignment
 
 // Game object class definitions and related logic
 
