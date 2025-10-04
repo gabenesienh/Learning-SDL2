@@ -12,29 +12,6 @@
 using std::array;
 using std::vector;
 
-// Axis-aligned bounding box
-class AABB {
-    friend class QuadTree;
-
-    private:
-        vec2   center;
-        double halfWidth;
-        double halfHeight;
-    public:
-        AABB();
-        AABB(vec2 center, double halfWidth, double halfHeight);
-
-        vec2   getCenter() const;
-        double getHalfWidth() const;
-        double getHalfHeight() const;
-
-        // Gets the X or Y coordinate at the very edge of the specified side
-        double getTopY() const;
-        double getBottomY() const;
-        double getLeftX() const;
-        double getRightX() const;
-};
-
 // A quadtree for holding GameObjects
 // Can either be the root node of a quadtree or a quadrant
 class QuadTree {
@@ -51,7 +28,7 @@ class QuadTree {
     public:
         QuadTree(AABB bounds);
 
-        AABB                getBounds() const;
+        const AABB&         getBounds() const;
         vector<GameObject*> getObjects() const;
         array<QuadTree*, 4> getQuadrants() const;
 

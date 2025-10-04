@@ -58,8 +58,30 @@ void doRender() {
     
             rendererRect.w = gobj->getWidth();
             rendererRect.h = gobj->getHeight();
-            rendererRect.x = gobj->getScreenX() - rendererRect.w/2;
-            rendererRect.y = gobj->getScreenY() - rendererRect.h;
+
+            switch (gobj->getAnchorOffsetX()) {
+                case eAnchorX::left:
+                    rendererRect.x = gobj->getScreenX();
+                    break;
+                case eAnchorX::middle:
+                    rendererRect.x = gobj->getScreenX() - rendererRect.w/2;
+                    break;
+                case eAnchorX::right:
+                    rendererRect.x = gobj->getScreenX() - rendererRect.w;
+                    break;
+            }
+            switch (gobj->getAnchorOffsetY()) {
+                case eAnchorY::top:
+                    rendererRect.y = gobj->getScreenY();
+                    break;
+                case eAnchorY::middle:
+                    rendererRect.y = gobj->getScreenY() - rendererRect.h/2;
+                    break;
+                case eAnchorY::bottom:
+                    rendererRect.y = gobj->getScreenY() - rendererRect.h;
+                    break;
+            }
+
             SDL_FillRect(gameSurface, &rendererRect, debugHitboxColor);
     
             /* -- Draw line from object's center to their direction -- */

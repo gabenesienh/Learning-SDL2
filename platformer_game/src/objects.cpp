@@ -6,34 +6,95 @@
 
 #include <cmath>
 #include <string>
+#include <stdexcept>
 
 #include "util.hpp"
 
 using std::abs;
 using std::string;
 
-/* -- GameObject -- */
+/* -- AABB -- */
+
+// Constructors
+AABB::AABB(vec2 center, double halfWidth, double halfHeight)
+    : center(center), halfWidth(halfWidth), halfHeight(halfHeight) {}
 
 // Getters
-double    GameObject::getX() const             { return this->x; }
-double    GameObject::getY() const             { return this->y; }
-int       GameObject::getWidth() const         { return this->width; }
-int       GameObject::getHeight() const        { return this->height; }
+double AABB::getTopY() const    { return this->center.y - this->halfHeight; }
+double AABB::getBottomY() const { return this->center.y + this->halfHeight; }
+double AABB::getLeftX() const   { return this->center.x - this->halfWidth; }
+double AABB::getRightX() const  { return this->center.x + this->halfWidth; }
+
+/* -- GameObject -- */
+
+/* IMPORTANT: For most cases, even internally, you do not want to manipulate
+ * this->bounds.center, since it refers to the bounding box's center,
+ * without accounting for the object's alignment anchor! Instead, use the
+ * proper getters and setters
+ */
+
+// Getters
+eAnchorX  GameObject::getAnchorOffsetX() const { return this->anchorOffsetX; }
+eAnchorY  GameObject::getAnchorOffsetY() const { return this->anchorOffsetY; }
 double    GameObject::getSpeedX() const        { return this->speedX; }
 double    GameObject::getSpeedY() const        { return this->speedY; }
 string    GameObject::getState() const         { return this->state; }
 vec2      GameObject::getDirection() const     { return this->direction; }
 eDirTypes GameObject::getDirectionType() const { return this->directionType; }
 
-double    GameObject::getScreenX() const       { return this->x; }
-double    GameObject::getScreenY() const       { return this->y; }
+double GameObject::getX() const {
+    switch (this->anchorOffsetX) {
+        case eAnchorX::left:
+            return this->bounds.center.x - this->bounds.halfWidth;
+        case eAnchorX::middle:
+            return this->bounds.center.x;
+        case eAnchorX::right:
+            return this->bounds.center.x + this->bounds.halfWidth;
+        default:
+            throw std::logic_error("An object's anchorOffsetX is invalid (somehow).");
+    }
+}
+double GameObject::getY() const {
+    switch (this->anchorOffsetY) {
+        case eAnchorY::top:
+            return this->bounds.center.y - this->bounds.halfHeight;
+        case eAnchorY::middle:
+            return this->bounds.center.y;
+        case eAnchorY::bottom:
+            return this->bounds.center.y + this->bounds.halfHeight;
+        default:
+            throw std::logic_error("An object's anchorOffsetY is invalid (somehow).");
+    }
+}
+double GameObject::getWidth() const {
+    return this->bounds.halfWidth*2;
+}
+double GameObject::getHeight() const {
+    return this->bounds.halfHeight*2;
+}
+double GameObject::getScreenX() const {
+    return this->getX();
+}
+double GameObject::getScreenY() const {
+    return this->getY();
+}
 
 // Setters
-void GameObject::setWidth(int width)          { this->width = width; }
-void GameObject::setHeight(int height)        { this->height = height; }
-void GameObject::setSpeedX(double speedX)     { this->speedX = speedX; }
-void GameObject::setSpeedY(double speedY)     { this->speedY = speedY; }
-void GameObject::setState(string state)       { this->state = state; }
+void GameObject::setWidth(double width) {
+    this->bounds.halfWidth = width/2;
+}
+void GameObject::setHeight(double height) {
+    this->bounds.halfHeight = height/2;
+}
+void GameObject::setSpeedX(double speedX) {
+    this->speedX = speedX;
+}
+void GameObject::setSpeedY(double speedY) {
+    this->speedY = speedY;
+}
+void GameObject::setState(string state) {
+    this->state = state;
+}
 bool GameObject::setDirection(vec2 direction) {
     // Normalize desired direction into unit vector
     direction = direction.normalized();
@@ -72,8 +133,34 @@ bool GameObject::isVisible() const {
     return true;
 }
 void GameObject::teleport(double x, double y) {
-    this->x = x;
-    this->y = y;
+    double destX = this->bounds.center.x;
+    double destY = this->bounds.center.y;
+
+    switch (this->anchorOffsetX) {
+        case eAnchorX::left:
+            destX = x + this->bounds.halfWidth;
+            break;
+        case eAnchorX::middle:
+            destX = x;
+            break;
+        case eAnchorX::right:
+            destX = x - this->bounds.halfWidth;
+            break;
+    }
+    switch (this->anchorOffsetY) {
+        case eAnchorY::top:
+            destY = y + this->bounds.halfHeight;
+            break;
+        case eAnchorY::middle:
+            destY = y;
+            break;
+        case eAnchorY::bottom:
+            destY = y - this->bounds.halfHeight;
+            break;
+    }
+
+    this->bounds.center.x = destX;
+    this->bounds.center.y = destY;
 }
 void GameObject::thrust(double addX, double addY) {
     this->speedX += addX;
@@ -101,14 +188,14 @@ GameObject::~GameObject() {};
 
 // Constructors
 Player::Player() {
-    this->width = PLR_WIDTH;
-    this->height = PLR_HEIGHT;
+    this->bounds = AABB({0, 0}, PLR_WIDTH/2, PLR_HEIGHT/2);
+    this->anchorOffsetX = eAnchorX::middle;
+    this->anchorOffsetY = eAnchorY::bottom;
     this->moveSpeed = PLR_MOVESPEED;
     this->state = "stand";
     this->direction = DIR_RIGHT;
     this->directionType = eDirTypes::horizontal;
 }
 Player::Player(double x, double y) : Player() {
-    this->x = x;
-    this->y = y;
+    this->teleport(x, y);
 }

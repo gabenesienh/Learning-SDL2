@@ -1,8 +1,5 @@
 //TODO: refactor GameObject::getScreen* methods into helper functions
-//TODO: add attributes for hitbox anchor alignment
 //TODO: add weight attribute
-//TODO: replace x, y, width and height properties of GameObject with AABB
-    //TODO: refactor spatial methods to adjust for hitbox anchor alignment
 
 // Game object class definitions and related logic
 
@@ -28,21 +25,48 @@ const vec2 DIR_UP = {0, -1};
 const vec2 DIR_DOWN = {0, 1};
 
 // Pre-defined sets of directions an object is allowed to have
-// Used in GameObject->setDirection() to prevent invalid directions for objects
-enum eDirTypes {
+enum class eDirTypes {
     none,
     horizontal,
     orthogonal,
     omni,
 };
 
+// Valid values for the position of a GameObject's alignment anchor
+// The anchor is the point from which the object's X and Y values are
+// calculated, from which the object will scale up or down in size, etc.
+enum class eAnchorX {
+    left,
+    middle,
+    right
+};
+enum class eAnchorY {
+    top,
+    middle,
+    bottom
+};
+
+// Axis-aligned bounding box
+struct AABB {
+    vec2 center;
+    double halfWidth;
+    double halfHeight;
+
+    AABB(vec2 center, double halfWidth, double halfHeight);
+
+    // Gets the X or Y coordinate at the very edge of the specified side
+    double getTopY() const;
+    double getBottomY() const;
+    double getLeftX() const;
+    double getRightX() const;
+};
+
 // Abstract class for specialized objects to implement
 class GameObject {
     protected:
-        double    x             = 0;
-        double    y             = 0;
-        int       width         = 16;
-        int       height        = 16;
+        AABB      bounds        = AABB({0, 0}, 8, 8);
+        eAnchorX  anchorOffsetX = eAnchorX::middle;
+        eAnchorY  anchorOffsetY = eAnchorY::middle;
         double    speedX        = 0;
         double    speedY        = 0;
         double    moveSpeed     = 1;
@@ -50,22 +74,27 @@ class GameObject {
         vec2      direction     = DIR_NONE;
         eDirTypes directionType = eDirTypes::none;
     public:
-        double    getX() const;
-        double    getY() const;
-        int       getWidth() const;
-        int       getHeight() const;
+        eAnchorX  getAnchorOffsetX() const;
+        eAnchorY  getAnchorOffsetY() const;
         double    getSpeedX() const;
         double    getSpeedY() const;
         string    getState() const;
         vec2      getDirection() const;
         eDirTypes getDirectionType() const;
 
-        // Same as getX and getY, but adjusted for the camera's position
-        double    getScreenX() const;
-        double    getScreenY() const;
+        // Gets the values from the object's bounding box, but adjusted for the
+        // anchor alignment
+        double getX() const;
+        double getY() const;
+        double getWidth() const;
+        double getHeight() const;
 
-        void setWidth(int width);
-        void setHeight(int height);
+        // Same as getX and getY, but adjusted for the camera's position
+        double getScreenX() const;
+        double getScreenY() const;
+
+        void setWidth(double width);
+        void setHeight(double height);
         void setSpeedX(double speedX);
         void setSpeedY(double speedY);
         void setState(string state);

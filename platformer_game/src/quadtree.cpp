@@ -8,39 +8,14 @@
 using std::array;
 using std::vector;
 
-/* -- AABB -- */
-
-// Constructors
-AABB::AABB() {
-    this->center = {0, 0};
-    this->halfWidth = 0;
-    this->halfHeight = 0;
-}
-AABB::AABB(vec2 center, double halfWidth, double halfHeight) {
-    this->center = center;
-    this->halfWidth = halfWidth;
-    this->halfHeight = halfHeight;
-}
-
-// Getters
-vec2   AABB::getCenter() const     { return this->center; }
-double AABB::getHalfWidth() const  { return this->halfWidth; }
-double AABB::getHalfHeight() const { return this->halfHeight; }
-
-double AABB::getTopY() const       { return this->center.y - this->halfHeight; }
-double AABB::getBottomY() const    { return this->center.y + this->halfHeight; }
-double AABB::getLeftX() const      { return this->center.x - this->halfWidth; }
-double AABB::getRightX() const     { return this->center.x + this->halfWidth; }
-
 /* -- QuadTree -- */
 
 // Constructors
-QuadTree::QuadTree(AABB bounds) {
-    this->bounds = bounds;
-}
+QuadTree::QuadTree(AABB bounds)
+    : bounds(bounds) {}
 
 // Getters
-AABB                QuadTree::getBounds() const    { return this->bounds; }
+const AABB&         QuadTree::getBounds() const    { return this->bounds; }
 vector<GameObject*> QuadTree::getObjects() const   { return this->objects; }
 array<QuadTree*, 4> QuadTree::getQuadrants() const { return this->quads; }
 
