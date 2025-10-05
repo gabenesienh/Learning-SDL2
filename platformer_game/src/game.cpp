@@ -45,7 +45,7 @@ Level* loadedLevel;
 
 deque<GameObject*> gameObjects = {};
 
-Player* player; //the player object in gameObjects
+Player* player; // The player object in gameObjects
 
 void doGame() {
 switch (gameState) {

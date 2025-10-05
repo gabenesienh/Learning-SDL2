@@ -15,7 +15,7 @@ QuadTree::QuadTree(AABB bounds)
     : bounds(bounds) {}
 
 // Getters
-const AABB&         QuadTree::getBounds() const    { return this->bounds; }
+AABB&               QuadTree::getBounds()          { return this->bounds; }
 vector<GameObject*> QuadTree::getObjects() const   { return this->objects; }
 array<QuadTree*, 4> QuadTree::getQuadrants() const { return this->quads; }
 
@@ -103,34 +103,92 @@ int QuadTree::findFittingQuadrant(AABB& box) const {
         fitsEast = true;
     }
 
+    // If the object fits a vertical and a horizontal half, that's a quadrant
+    // Return the this->quads index of the quadrant in question
     if (fitsNorth) {
         if (fitsWest) {
-            return 0;
+            return QUAD_NW;
         }
         if (fitsEast) {
-            return 1;
+            return QUAD_NE;
         }
     }
     if (fitsSouth) {
         if (fitsWest) {
-            return 2;
+            return QUAD_SW;
         }
         if (fitsEast) {
-            return 3;
+            return QUAD_SE;
         }
     }
 
     return -1;
 }
 
-bool QuadTree::insert(GameObject* gobj) {
-    return false;
-}
+void QuadTree::insert(GameObject* gobj) {
+    // Does this node already have quadrants generated?
+    if (this->quads[0] != nullptr) {
+        int fitsIndex = this->findFittingQuadrant(gobj->getBounds());
 
-vector<GameObject*> QuadTree::findCollidingObjects(AABB& box) const {
-    return {};
-}
+        // Insert this gobj into a quadrant instead, if there's one that fits it
+        if (fitsIndex != -1) {
+            this->quads[fitsIndex]->insert(gobj);
+            return;
+        }
+    }
 
-vector<GameObject*> QuadTree::findCollidingObjects(AABB& box, vector<GameObject*> acc) const {
-    return {};
+    // No quads generated or it doesn't fit into any of them, so insert it into
+    // this node
+    this->objects.push_back(gobj);
+
+    // Split this node if it's now above capacity
+    if (this->objects.size() > QuadTree::BUCKET_CAPACITY) {
+        if (this->quads[0] != nullptr) {
+            this->subdivide();
+        }
+
+        /*
+         * Move this node's objects into its newly-generated quadrants, if
+         * they fit
+         *
+         * This looks like it should be a for loop. However, once an element is
+         * erased from this->objects, the elements behind it get shifted forward
+         * by one index, so the index should not increment in such a scenario
+         */
+        int i = 0;
+
+        while (i < this->objects.size()) {
+            int fitsIndex = this->findFittingQuadrant(this->objects[i]->getBounds());
+
+            if (fitsIndex != -1) {
+                this->quads[fitsIndex]->insert(this->objects[i]);
+                this->objects.erase(this->objects.begin() + i);
+                return;
+            }
+
+            i++;
+        }
+    }
+}
+vector<GameObject*> QuadTree::findPossibleCollisions(
+    AABB& box,
+    vector<GameObject*> acc
+) const {
+    // acc is an accumulator with all objects that could collide with this AABB
+
+    // Recursively add objects from other quadrants this AABB fits into
+    if (this->quads[0] != nullptr) {
+        int index = this->findFittingQuadrant(box);
+
+        if (index != -1) {
+            acc = this->quads[index]->findPossibleCollisions(box, acc);
+        }
+    }
+
+    // Add all objects from this current node
+    for (GameObject* gobj : this->objects) {
+        acc.push_back(gobj);
+    }
+
+    return acc;
 }

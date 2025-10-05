@@ -89,9 +89,9 @@ void doRender() {
             rendererRect.w = 1;
             rendererRect.h = 1;
     
-            // The starting point of the line (object's center)
-            int centerX = gobj->getScreenX() - rendererRect.w/2;
-            int centerY = gobj->getScreenY() - gobj->getHeight()/2 - rendererRect.h/2;
+            // The starting point of the line (object's AABB's center)
+            int centerX = gobj->getBounds().center.x - rendererRect.w/2;
+            int centerY = gobj->getBounds().center.y - rendererRect.h/2;
     
             // The ending point of the line
             int targetX = centerX + (gobj->getDirection().x * 25);

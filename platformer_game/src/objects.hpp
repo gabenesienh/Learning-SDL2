@@ -13,8 +13,8 @@
 using std::string;
 
 // Default values for a newly spawned player
-const int PLR_WIDTH = 40;
-const int PLR_HEIGHT = 80;
+const int    PLR_WIDTH = 40;
+const int    PLR_HEIGHT = 80;
 const double PLR_MOVESPEED = 2.5;
 
 // Direction values for GameObjects that move orthogonally
@@ -74,6 +74,7 @@ class GameObject {
         vec2      direction     = DIR_NONE;
         eDirTypes directionType = eDirTypes::none;
     public:
+        AABB&     getBounds();
         eAnchorX  getAnchorOffsetX() const;
         eAnchorY  getAnchorOffsetY() const;
         double    getSpeedX() const;

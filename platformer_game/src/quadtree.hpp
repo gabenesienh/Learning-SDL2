@@ -12,6 +12,11 @@
 using std::array;
 using std::vector;
 
+const int QUAD_NW = 0;
+const int QUAD_NE = 1;
+const int QUAD_SW = 2;
+const int QUAD_SE = 3;
+
 // A quadtree for holding GameObjects
 // Can either be the root node of a quadtree or a quadrant
 class QuadTree {
@@ -21,14 +26,10 @@ class QuadTree {
         AABB                bounds;
         vector<GameObject*> objects;
         array<QuadTree*, 4> quads    = {nullptr}; // NW, NE, SW and SE quadrants
-
-        // Same as the public version, but with an accumulator for recursion
-        // See the public version of this method for details
-        vector<GameObject*> findCollidingObjects(AABB& box, vector<GameObject*> acc) const;
     public:
         QuadTree(AABB bounds);
 
-        const AABB&         getBounds() const;
+        AABB&               getBounds();
         vector<GameObject*> getObjects() const;
         array<QuadTree*, 4> getQuadrants() const;
 
@@ -48,11 +49,15 @@ class QuadTree {
         // Attempt to insert an object into this node
         // If necessary, this node will be subdivided and all its objects will
         // try to fit into a quadrant
-        bool insert(GameObject* gobj);
+        void insert(GameObject* gobj);
 
         // Recursively look for objects whose AABB intersect the given box's
         // Returns a list of matched objects
-        vector<GameObject*> findCollidingObjects(AABB& box) const;
+        // NOTE: do not specify a value for acc!
+        vector<GameObject*> findPossibleCollisions(
+            AABB& box,
+            vector<GameObject*> acc = {}
+        ) const;
 };
 
 #endif

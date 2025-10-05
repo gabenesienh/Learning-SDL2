@@ -34,6 +34,7 @@ double AABB::getRightX() const  { return this->center.x + this->halfWidth; }
  */
 
 // Getters
+AABB&     GameObject::getBounds()              { return this->bounds; }
 eAnchorX  GameObject::getAnchorOffsetX() const { return this->anchorOffsetX; }
 eAnchorY  GameObject::getAnchorOffsetY() const { return this->anchorOffsetY; }
 double    GameObject::getSpeedX() const        { return this->speedX; }
