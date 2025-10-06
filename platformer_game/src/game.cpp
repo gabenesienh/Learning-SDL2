@@ -1,4 +1,5 @@
-//TODO: implement quadtree structure for handling GameObjects
+//TODO: scale collisionTree bounds with currently loaded level
+//TODO: static quadtree for tiles
 
 #include "game.hpp"
 
@@ -13,6 +14,7 @@
 #include "levels.hpp"
 #include "objects.hpp"
 #include "preferences.hpp"
+#include "quadtree.hpp"
 #include "util.hpp"
 
 using std::min;
@@ -44,6 +46,15 @@ double debugOutputTimer = 0;
 Level* loadedLevel;
 
 deque<GameObject*> gameObjects = {};
+
+QuadTree* collisionTree = new QuadTree(
+    AABB(
+        nullptr,
+        {WINDOW_WIDTH/2, WINDOW_HEIGHT/2},
+        (WINDOW_WIDTH/2) - 2,
+        (WINDOW_HEIGHT/2) - 2
+    )
+);
 
 Player* player; // The player object in gameObjects
 
@@ -88,6 +99,9 @@ case GS_STARTED:
 
     /* -- Physics -- */
 
+    // Wipe last frame's collision tree
+    collisionTree->clear();
+
     for (auto gobj : gameObjects) {
         // Apply gravity to objects
         gobj->thrust(0, (gobj->getSpeedY()*GRAV_MULT + GRAV_ADD)*dt);
@@ -105,6 +119,9 @@ case GS_STARTED:
         if (gobj->getY() > 320) {
             gobj->teleport(gobj->getX(), 320);
         }
+
+        // Insert object bounding boxes back into the collision tree
+        collisionTree->insert(gobj->getBounds());
     }
 
     /* -- Debug -- */

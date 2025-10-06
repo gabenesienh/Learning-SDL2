@@ -6,11 +6,13 @@
 #include "events.hpp"
 #include "game.hpp"
 #include "tiles.hpp"
+#include "quadtree.hpp"
 #include "util.hpp"
 
 using std::abs, std::max;
 
 void setColors();
+void drawTree(QuadTree* tree); // Recursively draw a QuadTree
 
 // Used for rendering game objects as solid rectangles in debug mode
 // X and Y refer to screen position rather than game position
@@ -28,6 +30,7 @@ Uint32 debugHitboxColor;
 Uint32 debugAnchorColor;
 Uint32 debugDirectionColor;
 Uint32 debugPlayerAimColor;
+Uint32 debugQuadtreeColor;
 
 void doRender() {
     if (!isColorsSet) setColors();
@@ -48,6 +51,12 @@ void doRender() {
 
             SDL_FillRect(gameSurface, &rendererRect, debugTileColor);
         }
+    }
+
+    if (debugMode & DEBUG_SHOW_QUADS) {
+        /* -- Show boundaries of the collision tree -- */
+
+        drawTree(collisionTree);
     }
 
     for (GameObject* gobj : gameObjects) {
@@ -200,5 +209,33 @@ void setColors() {
         31
     );
 
+    debugQuadtreeColor = SDL_MapRGB(
+        gameSurface->format,
+        255,
+        127,
+        63
+    );
+
     isColorsSet = true;
+}
+
+void drawTree(QuadTree* tree) {
+    rendererRect.w = 1;
+    rendererRect.h = 1;
+
+    AABB& bounds = tree->getBounds();
+
+    drawRectangle(
+        gameSurface, rendererRect, debugQuadtreeColor,
+        bounds.center.x - bounds.halfWidth,
+        bounds.center.y - bounds.halfHeight,
+        bounds.center.x + bounds.halfWidth,
+        bounds.center.y + bounds.halfHeight
+    );
+
+    if (tree->getQuadrants()[0] != nullptr) {
+        for (QuadTree* quad : tree->getQuadrants()) {
+            drawTree(quad);
+        }
+    }
 }

@@ -16,23 +16,19 @@ QuadTree::QuadTree(AABB bounds)
 
 // Getters
 AABB&               QuadTree::getBounds()          { return this->bounds; }
-vector<GameObject*> QuadTree::getObjects() const   { return this->objects; }
+vector<AABB*>       QuadTree::getItems() const     { return this->items; }
 array<QuadTree*, 4> QuadTree::getQuadrants() const { return this->quads; }
 
 // Other methods
 void QuadTree::clear() {
-    // Delete all the objects this node holds
-    for (auto gobj : this->objects) {
-        delete(gobj);
-    }
+    // Delete the item pointers in this node
+    // Will NOT free the items that the pointers point to
+    this->items.clear();
 
-    // Delete the object pointers in this node
-    this->objects.clear();
-
-    // Recursively delete all objects contained in this node's quadrants
+    // Recursively delete all items contained in this node's quadrants
     // Also delete the quadrants themselves
     if (this->quads[0] != nullptr) {
-        for (auto quad : this->getQuadrants()) {
+        for (auto quad : this->quads) {
             quad->clear();
             delete(quad);
             quad = nullptr;
@@ -41,44 +37,38 @@ void QuadTree::clear() {
 }
 
 void QuadTree::subdivide() {
-    // For convenience
-    AABB& thisBox = this->bounds;
-
     vec2 nwCenter = {
-        thisBox.center.x - thisBox.halfWidth,
-        thisBox.center.y - thisBox.halfHeight
+        this->bounds.center.x - this->bounds.halfWidth,
+        this->bounds.center.y - this->bounds.halfHeight
     };
     vec2 neCenter = {
-        thisBox.center.x + thisBox.halfWidth,
-        thisBox.center.y - thisBox.halfHeight
+        this->bounds.center.x + this->bounds.halfWidth,
+        this->bounds.center.y - this->bounds.halfHeight
     };
     vec2 swCenter = {
-        thisBox.center.x - thisBox.halfWidth,
-        thisBox.center.y + thisBox.halfHeight
+        this->bounds.center.x - this->bounds.halfWidth,
+        this->bounds.center.y + this->bounds.halfHeight
     };
     vec2 seCenter = {
-        thisBox.center.x + thisBox.halfWidth,
-        thisBox.center.y + thisBox.halfHeight
+        this->bounds.center.x + this->bounds.halfWidth,
+        this->bounds.center.y + this->bounds.halfHeight
     };
 
     this->quads[0] = new QuadTree(
-        AABB(nwCenter, thisBox.halfWidth, thisBox.halfHeight)
+        AABB(nullptr, nwCenter, this->bounds.halfWidth, this->bounds.halfHeight)
     );
     this->quads[1] = new QuadTree(
-        AABB(neCenter, thisBox.halfWidth, thisBox.halfHeight)
+        AABB(nullptr, neCenter, this->bounds.halfWidth, this->bounds.halfHeight)
     );
     this->quads[2] = new QuadTree(
-        AABB(swCenter, thisBox.halfWidth, thisBox.halfHeight)
+        AABB(nullptr, swCenter, this->bounds.halfWidth, this->bounds.halfHeight)
     );
     this->quads[3] = new QuadTree(
-        AABB(seCenter, thisBox.halfWidth, thisBox.halfHeight)
+        AABB(nullptr, seCenter, this->bounds.halfWidth, this->bounds.halfHeight)
     );
 }
 
 int QuadTree::findFittingQuadrant(AABB& box) const {
-    // For convenience
-    const AABB& thisBox = this->bounds;
-
     bool fitsNorth;
     bool fitsSouth;
     bool fitsWest;
@@ -86,24 +76,24 @@ int QuadTree::findFittingQuadrant(AABB& box) const {
 
     // Check if the given box fits any possible halves of this node's bounds
     // In theory, no more than 2 of these should be true at the same time
-    if (box.getTopY() >= thisBox.getTopY()
-    &&  box.getBottomY() <= thisBox.center.y) {
+    if (box.getTopY() >= this->bounds.getTopY()
+    &&  box.getBottomY() <= this->bounds.center.y) {
         fitsNorth = true;
     }
-    if (box.getTopY() >= thisBox.center.y
-    &&  box.getBottomY() <= thisBox.getBottomY()) {
+    if (box.getTopY() >= this->bounds.center.y
+    &&  box.getBottomY() <= this->bounds.getBottomY()) {
         fitsSouth = true;
     }
-    if (box.getLeftX() >= thisBox.getLeftX()
-    &&  box.getRightX() <= thisBox.center.x) {
+    if (box.getLeftX() >= this->bounds.getLeftX()
+    &&  box.getRightX() <= this->bounds.center.x) {
         fitsWest = true;
     }
-    if (box.getLeftX() >= thisBox.center.x
-    &&  box.getRightX() <= thisBox.getRightX()) {
+    if (box.getLeftX() >= this->bounds.center.x
+    &&  box.getRightX() <= this->bounds.getRightX()) {
         fitsEast = true;
     }
 
-    // If the object fits a vertical and a horizontal half, that's a quadrant
+    // If the item fits a vertical and a horizontal half, that's a quadrant
     // Return the this->quads index of the quadrant in question
     if (fitsNorth) {
         if (fitsWest) {
@@ -125,44 +115,44 @@ int QuadTree::findFittingQuadrant(AABB& box) const {
     return -1;
 }
 
-void QuadTree::insert(GameObject* gobj) {
+void QuadTree::insert(AABB& box) {
     // Does this node already have quadrants generated?
     if (this->quads[0] != nullptr) {
-        int fitsIndex = this->findFittingQuadrant(gobj->getBounds());
+        int fitsIndex = this->findFittingQuadrant(box);
 
-        // Insert this gobj into a quadrant instead, if there's one that fits it
+        // Insert this box into a quadrant instead, if there's one that fits it
         if (fitsIndex != -1) {
-            this->quads[fitsIndex]->insert(gobj);
+            this->quads[fitsIndex]->insert(box);
             return;
         }
     }
 
     // No quads generated or it doesn't fit into any of them, so insert it into
     // this node
-    this->objects.push_back(gobj);
+    this->items.push_back(&box);
 
     // Split this node if it's now above capacity
-    if (this->objects.size() > QuadTree::BUCKET_CAPACITY) {
-        if (this->quads[0] != nullptr) {
+    if (this->items.size() > QuadTree::BUCKET_CAPACITY) {
+        if (this->quads[0] == nullptr) {
             this->subdivide();
         }
 
         /*
-         * Move this node's objects into its newly-generated quadrants, if
+         * Move this node's items into its newly-generated quadrants, if
          * they fit
          *
          * This looks like it should be a for loop. However, once an element is
-         * erased from this->objects, the elements behind it get shifted forward
+         * erased from this->items, the elements behind it get shifted forward
          * by one index, so the index should not increment in such a scenario
          */
         int i = 0;
 
-        while (i < this->objects.size()) {
-            int fitsIndex = this->findFittingQuadrant(this->objects[i]->getBounds());
+        while (i < this->items.size()) {
+            int fitsIndex = this->findFittingQuadrant(*(this->items[i]));
 
             if (fitsIndex != -1) {
-                this->quads[fitsIndex]->insert(this->objects[i]);
-                this->objects.erase(this->objects.begin() + i);
+                this->quads[fitsIndex]->insert(*(this->items[i]));
+                this->items.erase(this->items.begin() + i);
                 return;
             }
 
@@ -170,13 +160,13 @@ void QuadTree::insert(GameObject* gobj) {
         }
     }
 }
-vector<GameObject*> QuadTree::findPossibleCollisions(
+vector<AABB*> QuadTree::findPossibleCollisions(
     AABB& box,
-    vector<GameObject*> acc
+    vector<AABB*> acc
 ) const {
-    // acc is an accumulator with all objects that could collide with this AABB
+    // acc is an accumulator with all items that could collide with this AABB
 
-    // Recursively add objects from other quadrants this AABB fits into
+    // Recursively add items from other quadrants this AABB fits into
     if (this->quads[0] != nullptr) {
         int index = this->findFittingQuadrant(box);
 
@@ -185,9 +175,9 @@ vector<GameObject*> QuadTree::findPossibleCollisions(
         }
     }
 
-    // Add all objects from this current node
-    for (GameObject* gobj : this->objects) {
-        acc.push_back(gobj);
+    // Add all items from this current node
+    for (AABB* box : this->items) {
+        acc.push_back(box);
     }
 
     return acc;

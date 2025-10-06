@@ -7,6 +7,7 @@
 
 #include "levels.hpp"
 #include "objects.hpp"
+#include "quadtree.hpp"
 
 using std::deque;
 
@@ -15,10 +16,11 @@ const int GS_LAUNCHED = 0;
 const int GS_STARTED = 1;
 
 // Flags for use with debugMode
-const int DEBUG_PERFORMANCE_INFO = 0x0001;
-const int DEBUG_LEVEL_INFO       = 0x0010;
-const int DEBUG_PLAYER_INFO      = 0x0100;
-const int DEBUG_SHOW_HITBOXES    = 0x1000;
+const int DEBUG_PERFORMANCE_INFO = 0x00001;
+const int DEBUG_LEVEL_INFO       = 0x00010;
+const int DEBUG_PLAYER_INFO      = 0x00100;
+const int DEBUG_SHOW_HITBOXES    = 0x01000;
+const int DEBUG_SHOW_QUADS       = 0x10000;
 
 // Enables debug features
 // To be used with DEBUG_* consts, use bitwise operations to combine flags
@@ -36,6 +38,11 @@ extern Level* loadedLevel;
 
 // The objects currently present in the game
 extern deque<GameObject*> gameObjects;
+
+// Tree structure currently containing pointers to the bounding boxes of all
+// objects in-game
+// Should be remade each frame
+extern QuadTree* collisionTree;
 
 // Processes game logic for a frame
 extern void doGame();

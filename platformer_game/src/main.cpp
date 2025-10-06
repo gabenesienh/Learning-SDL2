@@ -18,7 +18,8 @@ int main(int argc, char** argv) {
 
     debugMode =   DEBUG_PERFORMANCE_INFO
                 | DEBUG_PLAYER_INFO
-                | DEBUG_SHOW_HITBOXES;
+                | DEBUG_SHOW_HITBOXES
+                | DEBUG_SHOW_QUADS;
 
     while (true) {
         // Update delta time

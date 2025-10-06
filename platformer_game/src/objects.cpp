@@ -16,8 +16,11 @@ using std::string;
 /* -- AABB -- */
 
 // Constructors
-AABB::AABB(vec2 center, double halfWidth, double halfHeight)
-    : center(center), halfWidth(halfWidth), halfHeight(halfHeight) {}
+AABB::AABB(GameObject* parent, vec2 center, double halfWidth, double halfHeight)
+    : parent(parent),
+      center(center),
+      halfWidth(halfWidth),
+      halfHeight(halfHeight) {}
 
 // Getters
 double AABB::getTopY() const    { return this->center.y - this->halfHeight; }
@@ -189,7 +192,7 @@ GameObject::~GameObject() {};
 
 // Constructors
 Player::Player() {
-    this->bounds = AABB({0, 0}, PLR_WIDTH/2, PLR_HEIGHT/2);
+    this->bounds = AABB(this, {0, 0}, PLR_WIDTH/2, PLR_HEIGHT/2);
     this->anchorOffsetX = eAnchorX::middle;
     this->anchorOffsetY = eAnchorY::bottom;
     this->moveSpeed = PLR_MOVESPEED;

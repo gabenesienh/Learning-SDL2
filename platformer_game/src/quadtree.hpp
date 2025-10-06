@@ -17,23 +17,23 @@ const int QUAD_NE = 1;
 const int QUAD_SW = 2;
 const int QUAD_SE = 3;
 
-// A quadtree for holding GameObjects
-// Can either be the root node of a quadtree or a quadrant
+// A quadtree for holding AABBs
+// Can either be the root node of a quadtree or a quadrant (a nested quadtree)
 class QuadTree {
     private:
         static const int BUCKET_CAPACITY = 4;
 
         AABB                bounds;
-        vector<GameObject*> objects;
-        array<QuadTree*, 4> quads    = {nullptr}; // NW, NE, SW and SE quadrants
+        vector<AABB*>       items;
+        array<QuadTree*, 4> quads   = {nullptr}; // NW, NE, SW and SE quadrants
     public:
         QuadTree(AABB bounds);
 
         AABB&               getBounds();
-        vector<GameObject*> getObjects() const;
+        vector<AABB*>       getItems() const;
         array<QuadTree*, 4> getQuadrants() const;
 
-        // Clears the objects of this node and clear its existing quadrants
+        // Clears the items of this node and clear its existing quadrants
         // recursively
         void clear();
 
@@ -46,17 +46,17 @@ class QuadTree {
         // node has been subdivided)
         int findFittingQuadrant(AABB& box) const;
 
-        // Attempt to insert an object into this node
-        // If necessary, this node will be subdivided and all its objects will
+        // Attempt to insert an item into this node
+        // If necessary, this node will be subdivided and all its items will
         // try to fit into a quadrant
-        void insert(GameObject* gobj);
+        void insert(AABB& box);
 
-        // Recursively look for objects whose AABB intersect the given box's
-        // Returns a list of matched objects
-        // NOTE: do not specify a value for acc!
-        vector<GameObject*> findPossibleCollisions(
+        // Recursively look for items (AABBs) which intersect the given box's
+        // Returns a list of matched items
+        // NOTE: do not specify a value for acc when calling!
+        vector<AABB*> findPossibleCollisions(
             AABB& box,
-            vector<GameObject*> acc = {}
+            vector<AABB*> acc = {}
         ) const;
 };
 
