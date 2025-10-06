@@ -45,6 +45,7 @@ double    GameObject::getSpeedY() const        { return this->speedY; }
 string    GameObject::getState() const         { return this->state; }
 vec2      GameObject::getDirection() const     { return this->direction; }
 eDirTypes GameObject::getDirectionType() const { return this->directionType; }
+double    GameObject::getWeight() const        { return this->weight; }
 
 double GameObject::getX() const {
     switch (this->anchorOffsetX) {
@@ -131,6 +132,9 @@ bool GameObject::setDirection(vec2 direction) {
     this->direction = direction;
     return true;
 }
+void GameObject::setWeight(double weight) {
+    this->weight = weight;
+}
 
 // Other methods
 bool GameObject::isVisible() const {
@@ -200,6 +204,25 @@ Player::Player() {
     this->direction = DIR_RIGHT;
     this->directionType = eDirTypes::horizontal;
 }
-Player::Player(double x, double y) : Player() {
+Player::Player(double x, double y)
+    : Player() {
     this->teleport(x, y);
+}
+
+/* -- Projectile -- */
+
+// Constructors
+Projectile::Projectile() {
+    this->directionType = eDirTypes::omni;
+    this->weight = 0;
+}
+Projectile::Projectile(GameObject* owner, double width, double height)
+    : Projectile() {
+    this->owner = owner;
+    this->bounds.halfWidth = width/2;
+    this->bounds.halfHeight = height/2;
+    
+    if (owner != nullptr) {
+        this->teleport(owner->getX(), owner->getY());
+    }
 }

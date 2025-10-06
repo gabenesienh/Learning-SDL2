@@ -35,11 +35,14 @@ Level* loadLevel(string levelName);
 void printDebugInfo();
 
 int debugMode = 0;
-int gameState = GS_LAUNCHED;
 
 // Counts up to 1 and then resets to zero
 // Used for delaying debug output
 double debugOutputTimer = 0;
+
+int gameState = GS_LAUNCHED;
+
+Player* player;
 
 // Points to a copy of a level from levelsTable
 // Receives a value upon calling loadLevel
@@ -56,7 +59,9 @@ QuadTree* collisionTree = new QuadTree(
     )
 );
 
-Player* player; // The player object in gameObjects
+// Stores last frame's mouseStates
+// Used to detect presses and releases
+array<bool, 5> mouseStatesTap = {false};
 
 void doGame() {
 switch (gameState) {
@@ -97,6 +102,14 @@ case GS_STARTED:
         player->setDirection(DIR_RIGHT);
     }
 
+    // Fire projectiles with M1
+    if (mouseStates[SDL_BUTTON_LEFT]
+    && !mouseStatesTap[SDL_BUTTON_LEFT]) {
+        Projectile* proj = new Projectile(player, 8, 8);
+
+        gameObjects.push_back(proj);
+    }
+
     /* -- Physics -- */
 
     // Wipe last frame's collision tree
@@ -123,6 +136,10 @@ case GS_STARTED:
         // Insert object bounding boxes back into the collision tree
         collisionTree->insert(gobj->getBounds());
     }
+
+    /* -- Other -- */
+
+    mouseStatesTap = mouseStates;
 
     /* -- Debug -- */
 

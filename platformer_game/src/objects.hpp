@@ -76,6 +76,7 @@ class GameObject {
         string    state         = "";
         vec2      direction     = DIR_NONE;
         eDirTypes directionType = eDirTypes::none;
+        double    weight        = 1; // A multiplier for physics calculations
     public:
         AABB&     getBounds();
         eAnchorX  getAnchorOffsetX() const;
@@ -85,6 +86,7 @@ class GameObject {
         string    getState() const;
         vec2      getDirection() const;
         eDirTypes getDirectionType() const;
+        double    getWeight() const;
 
         // Gets the values from the object's bounding box, but adjusted for the
         // anchor alignment
@@ -103,6 +105,7 @@ class GameObject {
         void setSpeedY(double speedY);
         void setState(string state);
         bool setDirection(vec2 direction);
+        void setWeight(double weight);
 
         // Checks if the object is visible and should be rendered
         bool isVisible() const;
@@ -131,6 +134,16 @@ class Player : public GameObject {
     public:
         Player();
         Player(double x, double y);
+};
+
+// A projectile which may harm certain entities on contact
+// If owner is nullptr, it will be considered an environment projectile
+class Projectile : public GameObject {
+    private:
+        GameObject* owner; // Who this projectile belongs to, if anyone
+    public:
+        Projectile();
+        Projectile(GameObject* owner, double width, double height);
 };
 
 #endif

@@ -69,10 +69,10 @@ void QuadTree::subdivide() {
 }
 
 int QuadTree::findFittingQuadrant(AABB& box) const {
-    bool fitsNorth;
-    bool fitsSouth;
-    bool fitsWest;
-    bool fitsEast;
+    bool fitsNorth = false;
+    bool fitsSouth = false;
+    bool fitsWest = false;
+    bool fitsEast = false;
 
     // Check if the given box fits any possible halves of this node's bounds
     // In theory, no more than 2 of these should be true at the same time
@@ -153,7 +153,7 @@ void QuadTree::insert(AABB& box) {
             if (fitsIndex != -1) {
                 this->quads[fitsIndex]->insert(*(this->items[i]));
                 this->items.erase(this->items.begin() + i);
-                return;
+                continue;
             }
 
             i++;

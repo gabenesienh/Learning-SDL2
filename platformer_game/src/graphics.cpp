@@ -54,8 +54,7 @@ void doRender() {
     }
 
     if (debugMode & DEBUG_SHOW_QUADS) {
-        /* -- Show boundaries of the collision tree -- */
-
+        // Show boundaries of the collision tree
         drawTree(collisionTree);
     }
 
@@ -113,12 +112,14 @@ void doRender() {
             );
     
             /* -- Draw line from player object(s) to cursor -- */
-                
-            drawLine(
-                gameSurface, rendererRect, debugPlayerAimColor,
-                centerX, centerY,
-                mouseScreenPos.x, mouseScreenPos.y
-            );
+
+            if (gobj == player) {
+                drawLine(
+                    gameSurface, rendererRect, debugPlayerAimColor,
+                    centerX, centerY,
+                    mouseScreenPos.x, mouseScreenPos.y
+                );
+            }
     
             /* -- Draw object's anchor point -- */
     
@@ -163,6 +164,27 @@ void drawRectangle(SDL_Surface* surface, SDL_Rect& rendererRect, Uint32 color, i
     drawLine(surface, rendererRect, color, x1, y0, x1, y1);
     drawLine(surface, rendererRect, color, x1, y1, x0, y1);
     drawLine(surface, rendererRect, color, x0, y1, x0, y0);
+}
+
+void drawTree(QuadTree* tree) {
+    rendererRect.w = 1;
+    rendererRect.h = 1;
+
+    AABB& bounds = tree->getBounds();
+
+    drawRectangle(
+        gameSurface, rendererRect, debugQuadtreeColor,
+        bounds.center.x - bounds.halfWidth,
+        bounds.center.y - bounds.halfHeight,
+        bounds.center.x + bounds.halfWidth,
+        bounds.center.y + bounds.halfHeight
+    );
+
+    if (tree->getQuadrants()[0] != nullptr) {
+        for (QuadTree* quad : tree->getQuadrants()) {
+            drawTree(quad);
+        }
+    }
 }
 
 // Necessary due to surface formats being unknown before util.cpp is run
@@ -217,25 +239,4 @@ void setColors() {
     );
 
     isColorsSet = true;
-}
-
-void drawTree(QuadTree* tree) {
-    rendererRect.w = 1;
-    rendererRect.h = 1;
-
-    AABB& bounds = tree->getBounds();
-
-    drawRectangle(
-        gameSurface, rendererRect, debugQuadtreeColor,
-        bounds.center.x - bounds.halfWidth,
-        bounds.center.y - bounds.halfHeight,
-        bounds.center.x + bounds.halfWidth,
-        bounds.center.y + bounds.halfHeight
-    );
-
-    if (tree->getQuadrants()[0] != nullptr) {
-        for (QuadTree* quad : tree->getQuadrants()) {
-            drawTree(quad);
-        }
-    }
 }

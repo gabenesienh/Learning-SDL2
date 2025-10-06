@@ -44,6 +44,9 @@ extern deque<GameObject*> gameObjects;
 // Should be remade each frame
 extern QuadTree* collisionTree;
 
+// The player object in gameObjects
+extern Player* player;
+
 // Processes game logic for a frame
 extern void doGame();
 

@@ -14,6 +14,10 @@ using std::array;
 // true means pressed, false means not pressed
 extern array<bool, SDL_NUM_SCANCODES> keyStates;
 
+// The current state of all mouse buttons
+// true means pressed, false means not pressed
+extern array<bool, 5> mouseStates;
+
 // The current X and Y position of the mouse cursor on the screen
 extern vec2 mouseScreenPos;
 
