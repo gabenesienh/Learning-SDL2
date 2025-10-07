@@ -1,3 +1,4 @@
 */bin
+\!MOVED/*/bin
 ex_*
 *.sublime-workspace
