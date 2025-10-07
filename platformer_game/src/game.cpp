@@ -95,7 +95,9 @@ case GS_STARTED:
         player->setState("stand");
     }
 
-    // Have the player face the cursor
+    // Have the player aim at and face the cursor
+    player->aimAt({mouseScreenPos.x, mouseScreenPos.y});
+
     if (mouseScreenPos.x < player->getScreenX()) {
         player->setDirection(DIR_LEFT);
     } else if (mouseScreenPos.x > player->getScreenX()) {
@@ -103,9 +105,17 @@ case GS_STARTED:
     }
 
     // Fire projectiles with M1
-    if (mouseStates[SDL_BUTTON_LEFT]
-    && !mouseStatesTap[SDL_BUTTON_LEFT]) {
+    if (mouseStates[SDL_BUTTON_LEFT]) {
         Projectile* proj = new Projectile(player, 8, 8);
+        proj->teleport(
+            player->getX(),
+            player->getBounds().center.y
+        );
+        proj->setWeight(0);
+        proj->thrust(
+            2 * player->getAimDirection().x,
+            2 * player->getAimDirection().y
+        );
 
         gameObjects.push_back(proj);
     }
@@ -115,9 +125,12 @@ case GS_STARTED:
     // Wipe last frame's collision tree
     collisionTree->clear();
 
-    for (auto gobj : gameObjects) {
+    for (GameObject* gobj : gameObjects) {
         // Apply gravity to objects
-        gobj->thrust(0, (gobj->getSpeedY()*GRAV_MULT + GRAV_ADD)*dt);
+        gobj->thrust(
+            0,
+            (gobj->getSpeedY()*GRAV_MULT + GRAV_ADD)*gobj->getWeight()*dt
+        );
 
         // Cap falling speed
         gobj->setSpeedY(min(gobj->getSpeedY(), GRAV_CAP));

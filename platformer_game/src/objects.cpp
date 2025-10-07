@@ -42,10 +42,14 @@ eAnchorX  GameObject::getAnchorOffsetX() const { return this->anchorOffsetX; }
 eAnchorY  GameObject::getAnchorOffsetY() const { return this->anchorOffsetY; }
 double    GameObject::getSpeedX() const        { return this->speedX; }
 double    GameObject::getSpeedY() const        { return this->speedY; }
+double    GameObject::getMoveSpeed() const     { return this->moveSpeed; }
 string    GameObject::getState() const         { return this->state; }
 vec2      GameObject::getDirection() const     { return this->direction; }
 eDirTypes GameObject::getDirectionType() const { return this->directionType; }
 double    GameObject::getWeight() const        { return this->weight; }
+vec2      GameObject::getAimDirection() const  { return this->aimDirection; }
+eAnchorX  GameObject::getAimOffsetX() const    { return this->aimOffsetX; }
+eAnchorY  GameObject::getAimOffsetY() const    { return this->aimOffsetY; }
 
 double GameObject::getX() const {
     switch (this->anchorOffsetX) {
@@ -96,6 +100,9 @@ void GameObject::setSpeedX(double speedX) {
 }
 void GameObject::setSpeedY(double speedY) {
     this->speedY = speedY;
+}
+void GameObject::setMoveSpeed(double moveSpeed) {
+    this->moveSpeed = moveSpeed;
 }
 void GameObject::setState(string state) {
     this->state = state;
@@ -189,6 +196,40 @@ void GameObject::walk(vec2 direction) {
     this->speedX = direction.x * this->moveSpeed;
     this->speedY = direction.y * this->moveSpeed;
 }
+void GameObject::aimAt(vec2 target) {
+    double aimX;
+    double aimY;
+
+    switch (this->aimOffsetX) {
+        case eAnchorX::left:
+            aimX = this->bounds.center.x - this->bounds.halfWidth;
+            break;
+        case eAnchorX::middle:
+            aimX = this->bounds.center.x;
+            break;
+        case eAnchorX::right:
+            aimX = this->bounds.center.x + this->bounds.halfWidth;
+            break;
+        default:
+            throw std::logic_error("An object's aimOffsetX is invalid (somehow).");
+    }
+    switch (this->aimOffsetY) {
+        case eAnchorY::top:
+            aimY = this->bounds.center.y - this->bounds.halfHeight;
+            break;
+        case eAnchorY::middle:
+            aimY = this->bounds.center.y;
+            break;
+        case eAnchorY::bottom:
+            aimY = this->bounds.center.y + this->bounds.halfHeight;
+            break;
+        default:
+            throw std::logic_error("An object's aimOffsetY is invalid (somehow).");
+    }
+
+    this->aimDirection = {target.x - aimX, target.y - aimY};
+    this->aimDirection = this->aimDirection.normalized();
+}
 
 GameObject::~GameObject() {};
 
@@ -203,6 +244,8 @@ Player::Player() {
     this->state = "stand";
     this->direction = DIR_RIGHT;
     this->directionType = eDirTypes::horizontal;
+    this->aimOffsetX = eAnchorX::middle;
+    this->aimOffsetY = eAnchorY::middle;
 }
 Player::Player(double x, double y)
     : Player() {

@@ -5,6 +5,7 @@
 #include <iostream>
 
 #include "game.hpp"
+#include "objects.hpp"
 
 using std::pow, std::sqrt;
 using std::cin, std::cout, std::endl;
@@ -84,9 +85,12 @@ bool init() {
 }
 
 void kill() {
-    for (auto gobj : gameObjects) {
+    for (GameObject* gobj : gameObjects) {
         delete gobj;
     }
+
+    collisionTree->clear();
+    delete(collisionTree);
 
     SDL_DestroyWindow(window);
     SDL_Quit();

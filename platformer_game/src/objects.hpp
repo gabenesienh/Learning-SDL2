@@ -1,5 +1,5 @@
 //TODO: refactor GameObject::getScreen* methods into helper functions
-//TODO: add weight attribute
+//TODO: implement projectile lifespan
 
 // Game object class definitions and related logic
 
@@ -76,17 +76,24 @@ class GameObject {
         string    state         = "";
         vec2      direction     = DIR_NONE;
         eDirTypes directionType = eDirTypes::none;
-        double    weight        = 1; // A multiplier for physics calculations
+        double    weight        = 1; // Simple multiplier
+        vec2      aimDirection  = DIR_NONE;
+        eAnchorX  aimOffsetX    = eAnchorX::middle; // The point from which
+        eAnchorY  aimOffsetY    = eAnchorY::middle; // projectiles spawn
     public:
         AABB&     getBounds();
         eAnchorX  getAnchorOffsetX() const;
         eAnchorY  getAnchorOffsetY() const;
         double    getSpeedX() const;
         double    getSpeedY() const;
+        double    getMoveSpeed() const;
         string    getState() const;
         vec2      getDirection() const;
         eDirTypes getDirectionType() const;
         double    getWeight() const;
+        vec2      getAimDirection() const;
+        eAnchorX  getAimOffsetX() const;
+        eAnchorY  getAimOffsetY() const;
 
         // Gets the values from the object's bounding box, but adjusted for the
         // anchor alignment
@@ -103,6 +110,7 @@ class GameObject {
         void setHeight(double height);
         void setSpeedX(double speedX);
         void setSpeedY(double speedY);
+        void setMoveSpeed(double moveSpeed);
         void setState(string state);
         bool setDirection(vec2 direction);
         void setWeight(double weight);
@@ -125,6 +133,9 @@ class GameObject {
         // Move the object moveSpeed units toward a direction
         void walk(vec2 direction);
 
+        // Change the object's aimDirection to aim at the given target
+        void aimAt(vec2 target);
+
         // Pure virtual destructor to ensure the class is abstract
         virtual ~GameObject() = 0;
 };
@@ -136,11 +147,12 @@ class Player : public GameObject {
         Player(double x, double y);
 };
 
-// A projectile which may harm certain entities on contact
+// A projectile which may harm entities on contact
 // If owner is nullptr, it will be considered an environment projectile
 class Projectile : public GameObject {
     private:
-        GameObject* owner; // Who this projectile belongs to, if anyone
+        GameObject* owner    = nullptr; // Who this projectile belongs to
+        double      lifespan = 180; // In frames
     public:
         Projectile();
         Projectile(GameObject* owner, double width, double height);

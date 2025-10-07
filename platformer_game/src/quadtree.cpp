@@ -28,43 +28,43 @@ void QuadTree::clear() {
     // Recursively delete all items contained in this node's quadrants
     // Also delete the quadrants themselves
     if (this->quads[0] != nullptr) {
-        for (auto quad : this->quads) {
-            quad->clear();
-            delete(quad);
-            quad = nullptr;
+        for (int i = 0; i < this->quads.size(); i++) {
+            this->quads[i]->clear();
+            delete(this->quads[i]);
+            this->quads[i] = nullptr;
         }
     }
 }
 
 void QuadTree::subdivide() {
     vec2 nwCenter = {
-        this->bounds.center.x - this->bounds.halfWidth,
-        this->bounds.center.y - this->bounds.halfHeight
+        this->bounds.center.x - this->bounds.halfWidth/2,
+        this->bounds.center.y - this->bounds.halfHeight/2
     };
     vec2 neCenter = {
-        this->bounds.center.x + this->bounds.halfWidth,
-        this->bounds.center.y - this->bounds.halfHeight
+        this->bounds.center.x + this->bounds.halfWidth/2,
+        this->bounds.center.y - this->bounds.halfHeight/2
     };
     vec2 swCenter = {
-        this->bounds.center.x - this->bounds.halfWidth,
-        this->bounds.center.y + this->bounds.halfHeight
+        this->bounds.center.x - this->bounds.halfWidth/2,
+        this->bounds.center.y + this->bounds.halfHeight/2
     };
     vec2 seCenter = {
-        this->bounds.center.x + this->bounds.halfWidth,
-        this->bounds.center.y + this->bounds.halfHeight
+        this->bounds.center.x + this->bounds.halfWidth/2,
+        this->bounds.center.y + this->bounds.halfHeight/2
     };
 
     this->quads[0] = new QuadTree(
-        AABB(nullptr, nwCenter, this->bounds.halfWidth, this->bounds.halfHeight)
+        AABB(nullptr, nwCenter, this->bounds.halfWidth/2, this->bounds.halfHeight/2)
     );
     this->quads[1] = new QuadTree(
-        AABB(nullptr, neCenter, this->bounds.halfWidth, this->bounds.halfHeight)
+        AABB(nullptr, neCenter, this->bounds.halfWidth/2, this->bounds.halfHeight/2)
     );
     this->quads[2] = new QuadTree(
-        AABB(nullptr, swCenter, this->bounds.halfWidth, this->bounds.halfHeight)
+        AABB(nullptr, swCenter, this->bounds.halfWidth/2, this->bounds.halfHeight/2)
     );
     this->quads[3] = new QuadTree(
-        AABB(nullptr, seCenter, this->bounds.halfWidth, this->bounds.halfHeight)
+        AABB(nullptr, seCenter, this->bounds.halfWidth/2, this->bounds.halfHeight/2)
     );
 }
 
